@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f7f7f7;
+  background: #f2f3f7;
 }
 
 header {
@@ -130,7 +130,7 @@ h2 {
 }
 
 .form-user input:focus {
-  border-color: #007a4f;
+  border-color: #00623d;
 }
 
 .btn-guardar {
@@ -142,6 +142,7 @@ h2 {
   font-size: 16px;
   border-radius: 20px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
 .btn-guardar:hover {
@@ -162,6 +163,7 @@ h2 {
   padding: 12px;
   border-radius: 10px;
   border: 1px solid #e2e2e2;
+  position: relative;
 }
 
 .item-pedido img {
@@ -178,4 +180,32 @@ h2 {
 .item-info .estado {
   color: #0f8a43;
   font-weight: bold;
+}
+
+.detalle-envio {
+  margin-top: 10px;
+  background: #f9f9f9;
+  padding: 12px;
+  border-left: 3px solid #004b2d;
+  border-radius: 8px;
+  display: none;
+}
+
+.btn-rastrear {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #004b2d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-rastrear:hover {
+  background: #00623d;
 }

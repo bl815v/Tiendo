@@ -27,9 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       id: "PED-001",
       producto: "Audífonos inalámbricos QCY H3",
-      precio: 129.9,
+      precio: 129900,
       estado: "En camino",
       imagen: "/view/img/producto1.jpg",
+
+      envio: {
+        pais: "Colombia",
+        ciudad: "Bogotá",
+        direccion: "Calle 00 #00-00",
+        fecha_envio: "2025-11-20",
+        fecha_entrega: "2025-11-25",
+        empresa: "Servientrega",
+        guia: "SRV-998812345",
+      },
     },
   ];
 
@@ -58,24 +68,50 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("user-direccion").value = userData.direccion;
   }
 
-  function renderPedidos() {
-    const cont = document.getElementById("pedidos-list");
-    cont.innerHTML = "";
+function renderPedidos() {
+  const cont = document.getElementById("pedidos-list");
+  cont.innerHTML = "";
 
-    pedidosEjemplo.forEach((p) => {
-      cont.innerHTML += `
-        <div class="item-pedido">
-          <img src="${p.imagen}" alt="producto">
-          <div class="item-info">
-            <p><strong>${p.producto}</strong></p>
-            <p>Pedido: ${p.id}</p>
-            <p>Precio: $${p.precio.toLocaleString()}</p>
-            <p class="estado">${p.estado}</p>
-          </div>
+  pedidosEjemplo.forEach((p, index) => {
+    cont.innerHTML += `
+      <div class="item-pedido" data-index="${index}">
+        <img src="${p.imagen}" alt="producto">
+        
+        <div class="item-info">
+          <p><strong>${p.producto}</strong></p>
+          <p>Pedido: ${p.id}</p>
+          <p>Precio: $${p.precio.toLocaleString()}</p>
+          <p class="estado">${p.estado}</p>
         </div>
-      `;
+
+        <button class="btn-rastrear">Rastrear</button>
+
+        <div class="detalle-envio">
+          <p><strong>Enviar a:</strong> ${p.envio.pais}, ${p.envio.ciudad}, ${p.envio.direccion}</p>
+          <p><strong>Fecha de envío:</strong> ${p.envio.fecha_envio}</p>
+          <p><strong>Fecha estimada de entrega:</strong> ${p.envio.fecha_entrega}</p>
+          <p><strong>Empresa transportadora:</strong> ${p.envio.empresa}</p>
+          <p><strong>Número de guía:</strong> ${p.envio.guia}</p>
+        </div>
+      </div>
+    `;
+  });
+  
+  document.querySelectorAll(".btn-rastrear").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const parent = btn.parentElement;
+      const detalle = parent.querySelector(".detalle-envio");
+
+      if (detalle.style.display === "block") {
+        detalle.style.display = "none";
+        btn.textContent = "Rastrear";
+      } else {
+        detalle.style.display = "block";
+        btn.textContent = "Ocultar";
+      }
     });
-  }
+  });
+}
 
   function renderHistorial() {
     const cont = document.getElementById("historial-list");
