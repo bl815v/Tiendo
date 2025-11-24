@@ -1,0 +1,108 @@
+<div class="login-container">
+  <h2 class="login-title">Iniciar sesión</h2>
+
+  <form class="login-form">
+    <div class="form-group">
+      <label>Correo</label>
+      <input type="email" placeholder="ejemplo@correo.com" />
+    </div>
+
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" placeholder="*********" />
+    </div>
+
+    <div class="btn-login-wrapper">
+      <button class="btn-login">Ingresar</button>
+    </div>
+
+    <p class="login-switch">
+      ¿No tienes cuenta? <span id="go-register">Crear cuenta</span>
+    </p>
+  </form>
+</div>
+
+<style>
+  .login-container {
+    padding: 20px;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .login-title {
+    text-align: center;
+    color: #004b2d;
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  .login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-size: 14px;
+    color: #004b2d;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+  }
+
+  .form-group input {
+    padding: 10px;
+    border: 2px solid #004b2d;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: #008f5a;
+  }
+
+  .btn-login-wrapper {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .btn-login {
+    background: #004b2d;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .btn-login:hover {
+    background: #00663f;
+  }
+
+  .login-switch {
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+    color: #2f3e36;
+  }
+
+  #go-register {
+    color: #004b2d;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  #go-register:hover {
+    text-decoration: underline;
+  }
+</style>

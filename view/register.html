@@ -1,0 +1,133 @@
+<div class="register-container">
+  <h2 class="register-title">Crear cuenta</h2>
+
+  <form class="register-form">
+    <div class="form-grid">
+      <!-- Columna izquierda -->
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" placeholder="Tu nombre" />
+      </div>
+
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" placeholder="Tu apellido" />
+      </div>
+
+      <div class="form-group">
+        <label>Correo</label>
+        <input type="email" placeholder="ejemplo@correo.com" />
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" placeholder="+57 300 000 0000" />
+      </div>
+
+      <div class="form-group">
+        <label>País</label>
+        <input type="text" placeholder="Colombia" />
+      </div>
+
+      <div class="form-group">
+        <label>Ciudad</label>
+        <input type="text" placeholder="Bogotá" />
+      </div>
+
+      <div class="form-group form-full">
+        <label>Dirección</label>
+        <input type="text" placeholder="Calle 00 #00-00" />
+      </div>
+    </div>
+
+    <div class="btn-crear-wrapper">
+      <button class="btn-crear">Crear cuenta</button>
+    </div>
+  </form>
+</div>
+
+<style>
+  .register-container {
+    padding: 20px;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .register-title {
+    text-align: center;
+    color: #004b2d;
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  .register-form {
+    width: 100%;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-size: 14px;
+    color: #004b2d;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+  }
+
+  .form-group input {
+    padding: 10px;
+    border: 2px solid #004b2d;
+    border-radius: 10px;
+    font-size: 15px;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: #008f5a;
+  }
+
+  .form-full {
+    grid-column: span 2;
+  }
+
+  .btn-crear-wrapper {
+    margin-top: 25px;
+    text-align: center;
+  }
+
+  .btn-crear {
+    background: #004b2d;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .btn-crear:hover {
+    background: #00663f;
+  }
+
+  @media (max-width: 480px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-full {
+      grid-column: span 1;
+    }
+  }
+</style>
