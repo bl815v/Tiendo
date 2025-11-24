@@ -33,3 +33,11 @@ app.mount("/view", StaticFiles(directory=static_path), name="view")
 @app.get("/")
 def read_root() -> FileResponse:
     return FileResponse(os.path.join(static_path, "index.html"))
+
+@app.get("/user")
+def read_user() -> FileResponse:
+    return FileResponse(os.path.join(static_path, "user.html"))
+
+@app.get("/cart")
+def read_cart() -> FileResponse:
+    return FileResponse(os.path.join(static_path, "cart.html"))
