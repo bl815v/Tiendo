@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderCarrito() {
     contenedor.innerHTML = "";
-
     let subtotal = 0;
 
     carrito.forEach((item) => {
@@ -23,13 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
       div.classList.add("cart-product");
 
       div.innerHTML = `
-      <img src="${item.imagen}" alt="">
-      <div class="cart-product-info">
-        <h4>${item.nombre}</h4>
-        <p>Cantidad: ${item.cantidad}</p>
-        <p>Precio: $${item.precio.toFixed(2)}</p>
-      </div>
-    `;
+        <img src="${item.imagen}" alt="">
+        <div class="cart-product-info">
+          <h4>${item.nombre}</h4>
+          <p>Cantidad: ${item.cantidad}</p>
+          <p>Precio: $${item.precio.toFixed(2)}</p>
+        </div>
+      `;
 
       contenedor.appendChild(div);
     });
@@ -44,4 +43,53 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderCarrito();
+
+  const btnRef = document.getElementById("btn-ref");
+  const refText = document.getElementById("ref-text");
+  const btnPagar = document.getElementById("btn-pagar");
+
+  let referenciaGenerada = null;
+
+  btnPagar.disabled = true;
+
+  function actualizarEstadoBoton() {
+    const metodo = document.querySelector('input[name="pago"]:checked');
+
+    if (metodo && referenciaGenerada) {
+      btnPagar.disabled = false;
+    } else {
+      btnPagar.disabled = true;
+    }
+  }
+
+  btnRef.addEventListener("click", () => {
+    referenciaGenerada = "REF-" + Math.floor(Math.random() * 1000000);
+
+    alert("Referencia generada: " + referenciaGenerada);
+
+    refText.textContent = "Referencia: " + referenciaGenerada;
+
+    actualizarEstadoBoton();
+  });
+
+  document.querySelectorAll('input[name="pago"]').forEach((radio) => {
+    radio.addEventListener("change", actualizarEstadoBoton);
+  });
+
+  btnPagar.addEventListener("click", () => {
+    const metodo = document.querySelector('input[name="pago"]:checked');
+
+    if (!metodo) {
+      alert("Debes seleccionar un método de pago.");
+      return;
+    }
+
+    if (!referenciaGenerada) {
+      alert("Debes generar una referencia antes de pagar.");
+      return;
+    }
+
+    alert("Enviando pago...");
+    alert("Pago procesado correctamente.");
+  });
 });
