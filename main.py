@@ -41,3 +41,7 @@ def read_user() -> FileResponse:
 @app.get("/cart")
 def read_cart() -> FileResponse:
     return FileResponse(os.path.join(static_path, "cart.html"))
+
+@app.get("/product")
+def read_product() -> FileResponse:
+    return FileResponse(os.path.join(static_path, "product.html"))

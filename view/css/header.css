@@ -1,0 +1,158 @@
+header {
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #004b2d;
+}
+
+.logo img {
+  width: 32px;
+  height: 32px;
+}
+
+.busqueda {
+  display: flex;
+  align-items: center;
+  border: 2px solid #004b2d;
+  border-radius: 50px;
+  background: white;
+  padding-left: 10px;
+}
+
+.busqueda input {
+  width: 320px;
+  padding: 6px 12px;
+  border: none;
+  font-size: 16px;
+  outline: none;
+}
+
+.btn-search {
+  background: transparent;
+  color: #004b2d;
+  border: none;
+  border-left: 2px solid #004b2d;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 18px;
+  border-radius: 0 50px 50px 0;
+  transition: 0.3s;
+}
+
+.btn-search:hover {
+  background: rgba(0, 75, 45, 0.08);
+}
+
+.acciones {
+  display: flex;
+  gap: 20px;
+  font-size: 26px;
+  cursor: pointer;
+  color: #004b2d;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.modal-small {
+  width: 380px;
+  max-width: 90vw;
+  padding: 20px 30px;
+}
+
+.modal-large {
+  width: 520px;
+  max-width: 95vw;
+  padding: 20px 40px 20px 0px;
+}
+
+.modal-titulo {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #004b2d;
+  text-align: center;
+  font-weight: bold;
+}
+
+.modal-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #004b2d;
+  z-index: 50;
+  user-select: none;
+}
+
+.btn-modal-primary {
+  background: #004b2d;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 17px;
+  transition: 0.2s;
+}
+
+.btn-modal-primary:hover {
+  background: #00623d;
+}
+
+.btn-modal-outline {
+  background: transparent;
+  color: #004b2d;
+  padding: 12px;
+  border: 2px solid #004b2d;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 17px;
+  transition: 0.2s;
+}
+
+.btn-modal-outline:hover {
+  background: rgba(0, 75, 45, 0.08);
+}

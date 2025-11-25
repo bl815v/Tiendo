@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/view/icon/favicon-96x96.png"
+      sizes="96x96"
+    />
+    <link rel="icon" type="image/svg+xml" href="/view/icon/favicon.svg" />
+    <link rel="shortcut icon" href="/view/icon/favicon.ico" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/view/icon/apple-touch-icon.png"
+    />
+    <meta name="apple-mobile-web-app-title" content="Tiendo" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="view/css/product.css" />
+    <script src="view/js/product.js" defer></script>
+    <link rel="stylesheet" href="view/css/header.css" />
+  </head>
+
+  <body>
+    <div id="header-placeholder"></div>
+
+    <div class="producto-container">
+      <div class="producto-imagen">
+        <img id="img-producto" src="/view/img/ejemplo.jpg" />
+      </div>
+
+      <div class="producto-info">
+        <p class="categoria"></p>
+        <h1 id="nombre-producto"></h1>
+
+        <p class="precio" id="precio-producto"></p>
+
+        <form id="formCantidad" class="form-cantidad">
+          <label for="cantidad">Cantidad:</label>
+          <input type="number" id="cantidad" min="1" value="1" />
+
+          <button type="submit" class="btn-agregar">Agregar al carrito</button>
+        </form>
+
+        <div class="descripcion-titulo">Descripción</div>
+        <p class="descripcion" id="desc-producto"></p>
+      </div>
+    </div>
+  </body>
+</html>
