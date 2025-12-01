@@ -61,3 +61,7 @@ def login_template(request: Request):
 @app.get("/register-template")
 def register_template(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "message": "Tiendo API is running"}

@@ -8,6 +8,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "fastapi>=0.121.3",
     "jinja2>=3.1.6",
+    "psycopg2>=2.9.11",
     "pywebview>=6.1",
     "requests>=2.32.5",
     "sqlalchemy>=2.0.44",

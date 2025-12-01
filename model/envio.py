@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from data.database import Base
 
+
 class EnvioDTO(BaseModel):
     id_envio: Optional[int] = None
     id_pedido: int
@@ -19,11 +20,12 @@ class EnvioDTO(BaseModel):
     class Config:
         from_attributes = True
 
+
 class EnvioDAO(Base):
     __tablename__ = "envio"
 
     id_envio = Column(Integer, primary_key=True, index=True)
-    id_pedido = Column(Integer, ForeignKey('pedido.id_pedido'), nullable=False)
+    id_pedido = Column(Integer, ForeignKey("pedido.id_pedido"), nullable=False)
     direccion_envio = Column(Text, nullable=False)
     ciudad_envio = Column(String(100))
     pais_envio = Column(String(100))

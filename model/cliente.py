@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.orm import relationship
 from data.database import Base
 
+
 class ClienteDTO(BaseModel):
     id_cliente: Optional[int] = None
     nombre: str
@@ -16,6 +17,7 @@ class ClienteDTO(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ClienteDAO(Base):
     __tablename__ = "cliente"
