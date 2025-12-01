@@ -5,13 +5,18 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse
-# from controller import root_router
+
+from controller.routers import router as api_router
+from data.database import engine, Base
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Tiendo",
     description="Basic international virtual store",
     version="0.1.0",
 )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
@@ -26,12 +31,12 @@ else:
     BASE_PATH = os.path.abspath(".")
 
 static_path = os.path.join(BASE_PATH, "static")
-
 app.mount("/static", StaticFiles(directory=static_path), name="static")
+
 templates_path = os.path.join(BASE_PATH, "templates")
 templates = Jinja2Templates(directory=templates_path)
 
-# app.include_router(si)
+app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request) -> HTMLResponse:
