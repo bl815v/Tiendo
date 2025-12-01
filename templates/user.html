@@ -2,32 +2,47 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+
+    <link rel="icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
     <link
       rel="icon"
-      type="image/png"
-      href="/view/icon/favicon-96x96.png"
-      sizes="96x96"
+      type="image/svg+xml"
+      href="{{ url_for('static', path='icon/favicon.svg') }}"
     />
-    <link rel="icon" type="image/svg+xml" href="/view/icon/favicon.svg" />
-    <link rel="shortcut icon" href="/view/icon/favicon.ico" />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', path='icon/favicon.ico') }}"
+    />
     <link
       rel="apple-touch-icon"
       sizes="180x180"
-      href="/view/icon/apple-touch-icon.png"
+      href="{{ url_for('static', path='icon/apple-touch-icon.png') }}"
     />
+
     <meta name="apple-mobile-web-app-title" content="Tiendo" />
-    <link rel="manifest" href="/site.webmanifest" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Tiendo | Mi cuenta</title>
-    <link rel="stylesheet" href="view/css/user.css" />
-    <script src="view/js/user.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='css/user.css') }}"
+    />
+    <script src="{{ url_for('static', path='js/user.js') }}" defer></script>
   </head>
+
   <body>
     <header>
       <div class="logo">
-        <img src="/view/icon/favicon.ico" alt="logo" /> <span>Tiendo</span>
+        <img
+          src="{{ url_for('static', path='icon/favicon.ico') }}"
+          alt="logo"
+        />
+        <span>Tiendo</span>
       </div>
     </header>
+
     <div class="user-container">
       <aside class="sidebar">
         <div class="user-info">

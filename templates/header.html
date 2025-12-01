@@ -1,0 +1,23 @@
+<header>
+  <div class="logo">
+    <img
+      src="{{ url_for('static', path='icon/favicon.ico') }}"
+      alt="logo"
+    />
+    <span>Tiendo</span>
+  </div>
+
+  <div class="busqueda">
+    <input type="text" id="input-busqueda" placeholder="Buscar productos..." />
+    <button id="btn-search" class="btn-search">🔍</button>
+  </div>
+
+  <div class="acciones">
+    <div class="btn-cuenta" id="btn-cuenta">👤</div>
+    <div class="btn-carrito" onclick="window.location.href='/cart'">🛒</div>
+  </div>
+</header>
+
+<div id="modal" class="modal hidden">
+  <div id="modal-content" class="modal-content"></div>
+</div>

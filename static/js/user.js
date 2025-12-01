@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
       producto: "Audífonos inalámbricos QCY H3",
       precio: 129900,
       estado: "En camino",
-      imagen: "/view/img/producto1.jpg",
+      imagen: "/static/img/producto1.jpg",
 
       envio: {
         pais: "Colombia",
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
       producto: "Mouse Logitech G305",
       precio: 159.9,
       fecha: "2025-03-10",
-      imagen: "/view/img/producto2.jpg",
+      imagen: "/static/img/producto2.jpg",
     },
   ];
 
@@ -68,12 +68,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("user-direccion").value = userData.direccion;
   }
 
-function renderPedidos() {
-  const cont = document.getElementById("pedidos-list");
-  cont.innerHTML = "";
+  function renderPedidos() {
+    const cont = document.getElementById("pedidos-list");
+    cont.innerHTML = "";
 
-  pedidosEjemplo.forEach((p, index) => {
-    cont.innerHTML += `
+    pedidosEjemplo.forEach((p, index) => {
+      cont.innerHTML += `
       <div class="item-pedido" data-index="${index}">
         <img src="${p.imagen}" alt="producto">
         
@@ -87,31 +87,35 @@ function renderPedidos() {
         <button class="btn-rastrear">Rastrear</button>
 
         <div class="detalle-envio">
-          <p><strong>Enviar a:</strong> ${p.envio.pais}, ${p.envio.ciudad}, ${p.envio.direccion}</p>
+          <p><strong>Enviar a:</strong> ${p.envio.pais}, ${p.envio.ciudad}, ${
+        p.envio.direccion
+      }</p>
           <p><strong>Fecha de envío:</strong> ${p.envio.fecha_envio}</p>
-          <p><strong>Fecha estimada de entrega:</strong> ${p.envio.fecha_entrega}</p>
+          <p><strong>Fecha estimada de entrega:</strong> ${
+            p.envio.fecha_entrega
+          }</p>
           <p><strong>Empresa transportadora:</strong> ${p.envio.empresa}</p>
           <p><strong>Número de guía:</strong> ${p.envio.guia}</p>
         </div>
       </div>
     `;
-  });
-  
-  document.querySelectorAll(".btn-rastrear").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const parent = btn.parentElement;
-      const detalle = parent.querySelector(".detalle-envio");
-
-      if (detalle.style.display === "block") {
-        detalle.style.display = "none";
-        btn.textContent = "Rastrear";
-      } else {
-        detalle.style.display = "block";
-        btn.textContent = "Ocultar";
-      }
     });
-  });
-}
+
+    document.querySelectorAll(".btn-rastrear").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const parent = btn.parentElement;
+        const detalle = parent.querySelector(".detalle-envio");
+
+        if (detalle.style.display === "block") {
+          detalle.style.display = "none";
+          btn.textContent = "Rastrear";
+        } else {
+          detalle.style.display = "block";
+          btn.textContent = "Ocultar";
+        }
+      });
+    });
+  }
 
   function renderHistorial() {
     const cont = document.getElementById("historial-list");

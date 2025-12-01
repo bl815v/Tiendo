@@ -1,14 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("view/header.html")
-    .then((r) => r.text())
-    .then((h) => {
-      document.getElementById("header-placeholder").innerHTML = h;
-      const script = document.createElement("script");
-      script.src = "view/js/header.js";
-      document.body.appendChild(script);
-    });
-
-  // Ejemplos de productos (luego se reemplazan con backend)
+  // Productos de ejemplo
   const productos = [
     {
       nombre: "Audífonos inalámbricos Pro",
@@ -32,9 +23,20 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   ];
 
+  const params = new URLSearchParams(window.location.search);
+  const termino = params.get("search");
+
+  let productosFiltrados = productos;
+
+  if (termino) {
+    productosFiltrados = productos.filter((p) =>
+      p.nombre.toLowerCase().includes(termino.toLowerCase())
+    );
+  }
+
   const grid = document.getElementById("grid-productos");
 
-  productos.forEach((p) => {
+  productosFiltrados.forEach((p) => {
     const card = document.createElement("div");
     card.classList.add("producto-card");
 

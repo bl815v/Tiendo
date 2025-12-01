@@ -1,14 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  fetch("view/header.html")
-    .then((r) => r.text())
-    .then((h) => {
-      document.getElementById("header-placeholder").innerHTML = h;
-      const script = document.createElement("script");
-      script.src = "view/js/header.js";
-      document.body.appendChild(script);
-    });
-
-  // Simulación de producto cargado por JS
+  // Ejemplo de datos del producto
   const producto = {
     nombre: "Audífonos Inalámbricos Bluetooth",
     precio: 199.99,

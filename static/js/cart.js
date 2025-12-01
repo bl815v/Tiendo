@@ -55,11 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function actualizarEstadoBoton() {
     const metodo = document.querySelector('input[name="pago"]:checked');
 
-    if (metodo && referenciaGenerada) {
-      btnPagar.disabled = false;
-    } else {
-      btnPagar.disabled = true;
-    }
+    btnPagar.disabled = !(metodo && referenciaGenerada);
   }
 
   btnRef.addEventListener("click", () => {
