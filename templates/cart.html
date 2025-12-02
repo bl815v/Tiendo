@@ -26,15 +26,18 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Carrito de compras</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='css/header.css') }}"
+    />
+
+    <script defer src="{{ url_for('static', path='js/header.js') }}"></script>
 
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='static/css/cart.css') }}"
+      href="{{ url_for('static', path='css/cart.css') }}"
     />
-    <script
-      defer
-      src="{{ url_for('static', filename='static/js/cart.js') }}"
-    ></script>
+    <script defer src="{{ url_for('static', path='js/cart.js') }}"></script>
   </head>
 
   <body>

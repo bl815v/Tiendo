@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin - Login</title>
+
+    <link
+      rel="icon"
+      type="image/png"
+      href="{{ url_for('static', path='icon/favicon-96x96.png') }}"
+      sizes="96x96"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='css/admin_login.css') }}"
+    />
+    <script
+      defer
+      src="{{ url_for('static', path='js/admin_login.js') }}"
+    ></script>
+  </head>
+  <body>
+    <main class="login-page">
+      <section class="login-card">
+        <div class="brand">
+          <img
+            src="{{ url_for('static', path='icon/favicon.svg') }}"
+            alt="logo"
+          />
+          <h1>Tiendo</h1>
+        </div>
+
+        <h2>Panel de administración</h2>
+        <p class="hint">Introduce tu usuario y contraseña de administrador.</p>
+
+        <form id="admin-login-form" method="POST" action="/admin/login">
+          <label for="username">Usuario</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            required
+            autofocus
+          />
+
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+
+          <div class="actions">
+            <button type="submit" class="btn-primary">Entrar</button>
+          </div>
+
+          {% if error %}
+          <div id="login-error" class="error">{{ error }}</div>
+          {% else %}
+          <div id="login-error" class="error hidden"></div>
+          {% endif %}
+        </form>
+
+        <footer class="login-footer">
+          <small>Acceso solo para administradores autorizados.</small>
+        </footer>
+      </section>
+
+      <aside class="login-side">
+        <h3>Bienvenido</h3>
+        <p>
+          Desde aquí podrás administrar productos, categorías, pedidos y
+          usuarios.
+        </p>
+      </aside>
+    </main>
+  </body>
+</html>
