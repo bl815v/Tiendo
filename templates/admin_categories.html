@@ -14,26 +14,43 @@
             </tr>
         </thead>
         <tbody id="categories-body">
-            <tr><td colspan="4">Cargando categorías...</td></tr>
+            <tr>
+                <td colspan="4">Cargando categorías...</td>
+            </tr>
         </tbody>
     </table>
 </div>
 
 <script>
-async function loadCategories() {
-    const tbody = document.getElementById('categories-body');
-    tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
-    
-    try {
-        const response = await fetch('/api/admin/categories');
-        const categories = await response.json();
-        
-        if (categories.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4">No hay categorías registradas</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = categories.map(cat => `
+    async function loadCategories() {
+        const tbody = document.getElementById('categories-body');
+        tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+
+        try {
+            console.log('Haciendo fetch a /api/v1/categorias...');
+            const response = await fetch('/api/v1/categorias', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Respuesta recibida:', response.status, response.statusText);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const categories = await response.json();
+            console.log('Datos recibidos:', categories);
+
+            if (categories.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No hay categorías registradas</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = categories.map(cat => `
             <tr id="category-row-${cat.id_categoria}">
                 <td>${cat.id_categoria}</td>
                 <td><span class="editable" data-field="nombre">${cat.nombre}</span></td>
@@ -45,81 +62,95 @@ async function loadCategories() {
                 </td>
             </tr>
         `).join('');
-    } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="4">Error cargando categorías</td></tr>';
-    }
-}
 
-function editCategory(id) {
-    const row = document.getElementById(`category-row-${id}`);
-    const editBtn = row.querySelector('.btn-edit');
-    const saveBtn = row.querySelector('.btn-save');
-    
-    row.querySelectorAll('.editable').forEach(span => {
-        const field = span.dataset.field;
-        const value = span.textContent;
-        
-        if (field === 'descripcion') {
-            span.innerHTML = `<textarea class="edit-input" data-field="${field}" style="width:100%;min-height:60px">${value}</textarea>`;
-        } else {
-            span.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${value}" style="width:100%">`;
+            console.log('Tabla actualizada con', categories.length, 'categorías');
+        } catch (error) {
+            console.error('Error cargando categorías:', error);
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="color: red; text-align: center;">
+                    Error cargando categorías: ${error.message}<br>
+                    Revisa la consola para más detalles.
+                </td>
+            </tr>
+        `;
         }
-    });
-    
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'inline-block';
-}
+    }
 
-async function saveCategory(id) {
-    const row = document.getElementById(`category-row-${id}`);
-    const inputs = row.querySelectorAll('.edit-input');
-    const data = {};
-    
-    inputs.forEach(input => {
-        data[input.dataset.field] = input.value;
-    });
-    
-    try {
-        const response = await fetch(`/api/admin/categories/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
+    function editCategory(id) {
+        const row = document.getElementById(`category-row-${id}`);
+        const editBtn = row.querySelector('.btn-edit');
+        const saveBtn = row.querySelector('.btn-save');
+
+        row.querySelectorAll('.editable').forEach(span => {
+            const field = span.dataset.field;
+            const value = span.textContent;
+
+            if (field === 'descripcion') {
+                span.innerHTML = `<textarea class="edit-input" data-field="${field}" style="width:100%;min-height:60px">${value}</textarea>`;
+            } else {
+                span.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${value}" style="width:100%">`;
+            }
         });
-        
-        if (response.ok) {
-            const updated = await response.json();
-            alert('✅ Categoría actualizada');
-            loadCategories();
-        } else {
-            const error = await response.json();
-            alert('❌ Error: ' + error.detail);
-        }
-    } catch (error) {
-        alert('❌ Error de conexión');
-    }
-}
 
-async function deleteCategory(id) {
-    if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
-    
-    try {
-        const response = await fetch(`/api/admin/categories/${id}`, {
-            method: 'DELETE'
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+    }
+
+    async function saveCategory(id) {
+        const row = document.getElementById(`category-row-${id}`);
+        const inputs = row.querySelectorAll('.edit-input');
+        const data = {};
+
+        inputs.forEach(input => {
+            data[input.dataset.field] = input.value;
         });
-        
-        if (response.ok) {
-            alert('✅ Categoría eliminada');
-            loadCategories();
-        } else {
-            const error = await response.json();
-            alert('❌ Error: ' + error.detail);
-        }
-    } catch (error) {
-        alert('❌ Error de conexión');
-    }
-}
 
-loadCategories();
+        try {
+            console.log('Actualizando categoría', id, 'con datos:', data);
+            const response = await fetch(`/api/v1/categorias/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Categoría actualizada');
+                loadCategories();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            console.error('Error actualizando categoría:', error);
+            alert('❌ Error de conexión');
+        }
+    }
+
+    async function deleteCategory(id) {
+        if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
+
+        try {
+            console.log('Eliminando categoría', id);
+            const response = await fetch(`/api/v1/categorias/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Categoría eliminada');
+                loadCategories();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            console.error('Error eliminando categoría:', error);
+            alert('❌ Error de conexión');
+        }
+    }
+    loadCategories();
 </script>

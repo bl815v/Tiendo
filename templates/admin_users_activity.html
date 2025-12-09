@@ -1,0 +1,101 @@
+<div class="content-header">
+    <h2>📊 Actividad de Usuarios</h2>
+    <button onclick="loadUserActivity()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <h3>Usuarios Totales</h3>
+        <p id="total-users" class="stat-number">0</p>
+    </div>
+    <div class="stat-card">
+        <h3>Pedidos Hoy</h3>
+        <p id="today-orders" class="stat-number">0</p>
+    </div>
+    <div class="stat-card">
+        <h3>Usuarios Activos</h3>
+        <p id="active-users" class="stat-number">0</p>
+    </div>
+</div>
+
+<div class="table-container">
+    <h3>Últimos Pedidos</h3>
+    <table id="activity-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Pedido ID</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="activity-body">
+            <tr>
+                <td colspan="5">Cargando actividad...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadUserActivity() {
+        try {
+            const [usersRes, ordersRes] = await Promise.all([
+                fetch('/api/v1/clientes'),
+                fetch('/api/v1/pedidos')
+            ]);
+
+            const users = await usersRes.json();
+            const orders = await ordersRes.json();
+
+            document.getElementById('total-users').textContent = users.length;
+
+            const today = new Date().toISOString().split('T')[0];
+            const todayOrders = orders.filter(order =>
+                order.fecha_pedido && order.fecha_pedido.startsWith(today)
+            );
+            document.getElementById('today-orders').textContent = todayOrders.length;
+
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const activeUsers = new Set(
+                orders.filter(order =>
+                    new Date(order.fecha_pedido) > thirtyDaysAgo
+                ).map(order => order.id_cliente)
+            );
+            document.getElementById('active-users').textContent = activeUsers.size;
+
+            const tbody = document.getElementById('activity-body');
+            const recentOrders = orders
+                .sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
+                .slice(0, 10);
+
+            if (recentOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No hay actividad reciente</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = recentOrders.map(order => {
+                const user = users.find(u => u.id_cliente === order.id_cliente);
+                const userName = user ? `${user.nombre} ${user.apellido}` : `Cliente #${order.id_cliente}`;
+
+                return `
+                    <tr>
+                        <td>${userName}</td>
+                        <td>${order.id_pedido}</td>
+                        <td>${new Date(order.fecha_pedido).toLocaleString()}</td>
+                        <td>$${order.total.toFixed(2)}</td>
+                        <td><span class="status status-${order.estado}">${order.estado}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (error) {
+            document.getElementById('activity-body').innerHTML =
+                '<tr><td colspan="5">Error cargando actividad</td></tr>';
+        }
+    }
+
+    loadUserActivity();
+</script>

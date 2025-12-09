@@ -9,12 +9,12 @@
             <label for="nombre">Nombre:</label>
             <input type="text" id="nombre" name="nombre" required class="form-input">
         </div>
-        
+
         <div class="form-group">
             <label for="descripcion">Descripción:</label>
             <textarea id="descripcion" name="descripcion" rows="3" class="form-input"></textarea>
         </div>
-        
+
         <div class="form-actions">
             <button type="submit" class="btn-primary">Guardar Categoría</button>
             <button type="button" onclick="window.adminCloseModal()" class="btn-secondary">Cancelar</button>
@@ -23,32 +23,39 @@
 </div>
 
 <script>
-document.getElementById('add-category-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = {
-        nombre: document.getElementById('nombre').value,
-        descripcion: document.getElementById('descripcion').value
-    };
-    
-    try {
-        const response = await fetch('/categorias/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (response.ok) {
-            alert('✅ Categoría agregada exitosamente');
-            document.getElementById('add-category-form').reset();
-        } else {
-            const error = await response.json();
-            alert('❌ Error: ' + error.detail);
+    document.getElementById('add-category-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = {
+            nombre: document.getElementById('nombre').value.trim(),
+            descripcion: document.getElementById('descripcion').value.trim()
+        };
+
+        if (!formData.nombre) {
+            alert('❌ El nombre es requerido');
+            return;
         }
-    } catch (error) {
-        alert('❌ Error de conexión');
-    }
-});
+
+        try {
+            const response = await fetch('/api/v1/categorias/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(`✅ Categoría "${result.nombre}" agregada exitosamente (ID: ${result.id_categoria})`);
+                document.getElementById('add-category-form').reset();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('❌ Error de conexión con el servidor');
+        }
+    });
 </script>

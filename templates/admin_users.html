@@ -1,0 +1,131 @@
+<div class="content-header">
+    <h2>👥 Gestión de Usuarios</h2>
+    <button onclick="loadUsers()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="table-container">
+    <table id="users-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Ciudad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="users-body">
+            <tr>
+                <td colspan="7">Cargando usuarios...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadUsers() {
+        const tbody = document.getElementById('users-body');
+        tbody.innerHTML = '<tr><td colspan="7">Cargando...</td></tr>';
+
+        try {
+            const response = await fetch('/api/v1/clientes');
+            const users = await response.json();
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No hay usuarios registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr id="user-row-${user.id_cliente}">
+                    <td>${user.id_cliente}</td>
+                    <td><span class="editable" data-field="nombre">${user.nombre}</span></td>
+                    <td><span class="editable" data-field="apellido">${user.apellido}</span></td>
+                    <td><span class="editable" data-field="correo" data-type="email">${user.correo}</span></td>
+                    <td><span class="editable" data-field="telefono">${user.telefono || ''}</span></td>
+                    <td><span class="editable" data-field="ciudad">${user.ciudad || ''}</span></td>
+                    <td class="actions">
+                        <button onclick="editUser(${user.id_cliente})" class="btn-edit">✏️ Editar</button>
+                        <button onclick="saveUser(${user.id_cliente})" class="btn-save" style="display:none">💾 Guardar</button>
+                        <button onclick="deleteUser(${user.id_cliente})" class="btn-delete">🗑️ Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="7">Error cargando usuarios</td></tr>';
+        }
+    }
+
+    function editUser(id) {
+        const row = document.getElementById(`user-row-${id}`);
+        const editBtn = row.querySelector('.btn-edit');
+        const saveBtn = row.querySelector('.btn-save');
+
+        row.querySelectorAll('.editable').forEach(span => {
+            const field = span.dataset.field;
+            const type = span.dataset.type || 'text';
+            const value = span.textContent;
+
+            span.innerHTML = `<input type="${type}" class="edit-input" data-field="${field}" value="${value}" style="width:100%">`;
+        });
+
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'inline-block';
+    }
+
+    async function saveUser(id) {
+        const row = document.getElementById(`user-row-${id}`);
+        const inputs = row.querySelectorAll('.edit-input');
+        const data = {};
+
+        inputs.forEach(input => {
+            data[input.dataset.field] = input.value;
+        });
+
+        try {
+            const response = await fetch(`/api/v1/clientes/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Usuario actualizado');
+                loadUsers();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+
+        try {
+            const response = await fetch(`/api/v1/clientes/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Usuario eliminado');
+                loadUsers();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    loadUsers();
+</script>

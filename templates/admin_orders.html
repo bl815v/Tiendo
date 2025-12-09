@@ -1,0 +1,153 @@
+<div class="content-header">
+    <h2>📦 Todos los Pedidos</h2>
+    <button onclick="loadOrders()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="table-container">
+    <table id="orders-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente ID</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="orders-body">
+            <tr><td colspan="6">Cargando pedidos...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function loadOrders() {
+    const tbody = document.getElementById('orders-body');
+    tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+    
+    try {
+        const response = await fetch('/api/v1/pedidos');
+        const orders = await response.json();
+        
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">No hay pedidos registrados</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = orders.map(order => `
+            <tr>
+                <td>${order.id_pedido}</td>
+                <td>${order.id_cliente}</td>
+                <td>${new Date(order.fecha_pedido).toLocaleString()}</td>
+                <td>$${order.total.toFixed(2)}</td>
+                <td><span class="status status-${order.estado}">${order.estado}</span></td>
+                <td class="actions">
+                    <button onclick="viewOrderDetails(${order.id_pedido})" class="btn-view">👁️ Ver</button>
+                    <button onclick="updateOrderStatus(${order.id_pedido})" class="btn-edit">✏️ Estado</button>
+                    <button onclick="deleteOrder(${order.id_pedido})" class="btn-delete">🗑️ Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="6">Error cargando pedidos</td></tr>';
+    }
+}
+
+async function deleteOrder(id) {
+    if (!confirm('¿Estás seguro de eliminar este pedido?')) return;
+    
+    try {
+        const response = await fetch(`/api/v1/pedidos/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Pedido eliminado');
+            loadOrders();
+        } else {
+            alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+function viewOrderDetails(id) {
+    window.adminOpenModal(`
+        <h3>Detalles del Pedido #${id}</h3>
+        <p>Cargando detalles...</p>
+    `);
+    
+    // Cargar detalles del pedido
+    fetch(`/api/v1/pedidos/${id}/detalles`)
+        .then(response => response.json())
+        .then(detalles => {
+            let detallesHTML = '';
+            detalles.forEach(detalle => {
+                detallesHTML += `
+                    <div class="detalle-item">
+                        <p><strong>Producto ID:</strong> ${detalle.id_producto}</p>
+                        <p><strong>Cantidad:</strong> ${detalle.cantidad}</p>
+                        <p><strong>Precio Unitario:</strong> $${detalle.precio_unitario}</p>
+                        <hr>
+                    </div>
+                `;
+            });
+            document.getElementById('modal-body').innerHTML += detallesHTML;
+        })
+        .catch(error => {
+            console.error('Error cargando detalles:', error);
+        });
+}
+
+function updateOrderStatus(id) {
+    window.adminOpenModal(`
+        <h3>Actualizar Estado del Pedido #${id}</h3>
+        <div class="form-group">
+            <label for="estado">Nuevo Estado:</label>
+            <select id="estado" class="form-input">
+                <option value="pendiente">Pendiente</option>
+                <option value="procesando">Procesando</option>
+                <option value="enviado">Enviado</option>
+                <option value="entregado">Entregado</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button onclick="saveStatus(${id})" class="btn-primary">Guardar</button>
+            <button onclick="window.adminCloseModal()" class="btn-secondary">Cancelar</button>
+        </div>
+    `);
+}
+
+async function saveStatus(orderId) {
+    const estado = document.getElementById('estado').value;
+    
+    try {
+        const response = await fetch(`/api/v1/pedidos/${orderId}/estado`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({estado: estado})
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Estado actualizado');
+            window.adminCloseModal();
+            loadOrders();
+        } else {
+            alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+loadOrders();
+</script>

@@ -29,6 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then((html) => {
           contentArea.innerHTML = html;
+
+          // Ejecutar scripts después de insertar el HTML
+          executeScripts(contentArea);
         })
         .catch((err) => {
           if (err.message !== "No autorizado") {
@@ -75,6 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalBody.innerHTML = html;
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
+
+    // Ejecutar scripts en el modal
+    setTimeout(() => executeScripts(modalBody), 100);
   }
 
   function closeModal() {
@@ -83,6 +89,37 @@ document.addEventListener("DOMContentLoaded", () => {
     modalBody.innerHTML = "";
   }
 
+  // Función para ejecutar scripts después de insertar HTML
+  function executeScripts(container) {
+    const scripts = container.querySelectorAll("script");
+
+    scripts.forEach((oldScript) => {
+      const newScript = document.createElement("script");
+
+      // Copiar todos los atributos
+      Array.from(oldScript.attributes).forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+
+      // Si tiene src, cargar el script externo
+      if (oldScript.src) {
+        newScript.src = oldScript.src;
+        newScript.async = false;
+        document.head.appendChild(newScript);
+      } else {
+        // Script inline - ejecutar el código
+        try {
+          newScript.textContent = oldScript.textContent;
+          document.body.appendChild(newScript);
+          document.body.removeChild(newScript);
+        } catch (error) {
+          console.error("Error ejecutando script:", error);
+        }
+      }
+    });
+  }
+
   window.adminOpenModal = openModal;
   window.adminCloseModal = closeModal;
+  window.executeScripts = executeScripts;
 });

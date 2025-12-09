@@ -9,14 +9,15 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_302_FOUND, HTTP_401_UNAUTHORIZED
 
-from controller.categorias import CategoriaDAO
-from controller.clientes import ClienteDAO
-from controller.pedidos import PedidoDAO
-from controller.productos import ProductoDAO
 from data.database import get_db
+from model.categoria import CategoriaDAO
+from model.cliente import ClienteDAO
+from model.pedido import PedidoDAO
+from model.producto import ProductoDAO
 
 load_dotenv()
 
@@ -173,59 +174,217 @@ def admin_users_activity(request: Request):
 	return templates.TemplateResponse('admin_users_activity.html', {'request': request})
 
 
-# Rutas API para los templates
-@router.get('/api/admin/products')
-def api_get_products(
+# ========== RUTAS API PARA ADMINISTRACIÓN ==========
+
+
+@router.get('/api/v1/admin/stats/products')
+def api_get_products_stats(
 	request: Request,
-	skip: int = Query(0, ge=0),
-	limit: int = Query(100, ge=1, le=200),
 	db: Session = Depends(get_db),
 ):
+	"""Estadísticas de productos para el panel de admin"""
 	require_admin_auth(request)
-	productos = db.query(ProductoDAO).offset(skip).limit(limit).all()
-	return [
-		{
-			'id_producto': p.id_producto,
-			'nombre': p.nombre,
-			'descripcion': p.descripcion,
-			'precio': float(p.precio),
-			'stock': p.stock,
-			'id_categoria': p.id_categoria,
-			'imagen': p.imagen,
+
+	total_productos = db.query(ProductoDAO).count()
+	productos_bajo_stock = db.query(ProductoDAO).filter(ProductoDAO.stock < 10).count()
+
+	productos_sin_imagen = (
+		db.query(ProductoDAO)
+		.filter((ProductoDAO.imagen == None) | (ProductoDAO.imagen == ''))
+		.count()
+	)
+
+	return {
+		'total_productos': total_productos,
+		'productos_bajo_stock': productos_bajo_stock,
+		'productos_sin_imagen': productos_sin_imagen,
+		'bajo_stock_porcentaje': (productos_bajo_stock / total_productos * 100)
+		if total_productos > 0
+		else 0,
+	}
+
+
+@router.get('/api/v1/admin/stats/orders')
+def api_get_orders_stats(
+	request: Request,
+	db: Session = Depends(get_db),
+):
+	"""Estadísticas de pedidos para el panel de admin"""
+	require_admin_auth(request)
+
+	from sqlalchemy import func
+
+	# Contar pedidos por estado
+	pedidos_por_estado = (
+		db.query(PedidoDAO.estado, func.count(PedidoDAO.id_pedido).label('cantidad'))
+		.group_by(PedidoDAO.estado)
+		.all()
+	)
+
+	total_pedidos = db.query(PedidoDAO).count()
+
+	# Pedidos de hoy
+	hoy = datetime.now().date()
+	pedidos_hoy = db.query(PedidoDAO).filter(func.date(PedidoDAO.fecha_pedido) == hoy).count()
+
+	# Total de ventas
+	total_ventas = db.query(func.sum(PedidoDAO.total)).scalar() or 0
+
+	return {
+		'total_pedidos': total_pedidos,
+		'pedidos_hoy': pedidos_hoy,
+		'total_ventas': float(total_ventas),
+		'por_estado': {estado: cantidad for estado, cantidad in pedidos_por_estado},
+	}
+
+
+@router.get('/api/v1/admin/stats/users')
+def api_get_users_stats(
+	request: Request,
+	db: Session = Depends(get_db),
+):
+	"""Estadísticas de usuarios para el panel de admin"""
+	require_admin_auth(request)
+
+	total_usuarios = db.query(ClienteDAO).count()
+
+	# Usuarios con pedidos
+	usuarios_con_pedidos = db.query(ClienteDAO).join(PedidoDAO).distinct().count()
+
+	# Últimos usuarios registrados (últimos 7 días)
+	from datetime import datetime, timedelta
+	from sqlalchemy import func
+
+	siete_dias_atras = datetime.now() - timedelta(days=7)
+	nuevos_usuarios = (
+		db.query(ClienteDAO)
+		.filter(func.date(ClienteDAO.fecha_registro) >= siete_dias_atras.date())
+		.count()
+		if hasattr(ClienteDAO, 'fecha_registro')
+		else 0
+	)
+
+	return {
+		'total_usuarios': total_usuarios,
+		'usuarios_con_pedidos': usuarios_con_pedidos,
+		'nuevos_usuarios_7dias': nuevos_usuarios,
+		'usuarios_activos_porcentaje': (usuarios_con_pedidos / total_usuarios * 100)
+		if total_usuarios > 0
+		else 0,
+	}
+
+
+@router.get('/api/v1/admin/debug')
+def api_admin_debug(
+	request: Request,
+	db: Session = Depends(get_db),
+):
+	"""Endpoint de diagnóstico para el administrador"""
+	require_admin_auth(request)
+
+	try:
+		# Estadísticas básicas
+		total_categorias = db.query(CategoriaDAO).count()
+		total_productos = db.query(ProductoDAO).count()
+		total_clientes = db.query(ClienteDAO).count()
+		total_pedidos = db.query(PedidoDAO).count()
+
+		# Verificar conexión a cada tabla
+		ultima_categoria = db.query(CategoriaDAO).order_by(CategoriaDAO.id_categoria.desc()).first()
+		ultimo_producto = db.query(ProductoDAO).order_by(ProductoDAO.id_producto.desc()).first()
+		ultimo_cliente = db.query(ClienteDAO).order_by(ClienteDAO.id_cliente.desc()).first()
+		ultimo_pedido = db.query(PedidoDAO).order_by(PedidoDAO.id_pedido.desc()).first()
+
+		return {
+			'status': 'OK',
+			'database': 'connected',
+			'timestamp': datetime.now().isoformat(),
+			'counts': {
+				'categorias': total_categorias,
+				'productos': total_productos,
+				'clientes': total_clientes,
+				'pedidos': total_pedidos,
+			},
+			'last_records': {
+				'categoria': {
+					'id': ultima_categoria.id_categoria if ultima_categoria else None,
+					'nombre': ultima_categoria.nombre if ultima_categoria else None,
+				}
+				if ultima_categoria
+				else None,
+				'producto': {
+					'id': ultimo_producto.id_producto if ultimo_producto else None,
+					'nombre': ultimo_producto.nombre if ultimo_producto else None,
+				}
+				if ultimo_producto
+				else None,
+				'cliente': {
+					'id': ultimo_cliente.id_cliente if ultimo_cliente else None,
+					'nombre': ultimo_cliente.nombre if ultimo_cliente else None,
+				}
+				if ultimo_cliente
+				else None,
+				'pedido': {
+					'id': ultimo_pedido.id_pedido if ultimo_pedido else None,
+					'total': float(ultimo_pedido.total) if ultimo_pedido else None,
+				}
+				if ultimo_pedido
+				else None,
+			},
 		}
-		for p in productos
-	]
+	except Exception as e:
+		return {
+			'status': 'ERROR',
+			'database': 'connection_failed',
+			'error': str(e),
+			'timestamp': datetime.now().isoformat(),
+		}
 
 
-@router.get('/api/admin/categories')
-def api_get_categories(
+# ========== RUTAS ESPECIALES PARA FILTRADO ==========
+
+
+@router.get('/api/v1/admin/filter/orders')
+def api_filter_orders(
 	request: Request,
-	skip: int = Query(0, ge=0),
-	limit: int = Query(100, ge=1, le=200),
-	db: Session = Depends(get_db),
-):
-	require_admin_auth(request)
-	categorias = db.query(CategoriaDAO).offset(skip).limit(limit).all()
-	return [
-		{'id_categoria': c.id_categoria, 'nombre': c.nombre, 'descripcion': c.descripcion}
-		for c in categorias
-	]
-
-
-@router.get('/api/admin/orders')
-def api_get_orders(
-	request: Request,
-	skip: int = Query(0, ge=0),
-	limit: int = Query(100, ge=1, le=200),
 	estado: str = Query(None),
+	cliente_id: int = Query(None),
+	fecha_desde: str = Query(None),
+	fecha_hasta: str = Query(None),
+	skip: int = Query(0, ge=0),
+	limit: int = Query(100, ge=1, le=200),
 	db: Session = Depends(get_db),
 ):
+	"""Filtrado avanzado de pedidos para el panel de admin"""
 	require_admin_auth(request)
+
 	query = db.query(PedidoDAO)
 
+	# Aplicar filtros
 	if estado:
 		query = query.filter(PedidoDAO.estado == estado)
 
+	if cliente_id:
+		query = query.filter(PedidoDAO.id_cliente == cliente_id)
+
+	if fecha_desde:
+		try:
+			fecha_desde_dt = datetime.fromisoformat(fecha_desde.replace('Z', '+00:00'))
+			query = query.filter(PedidoDAO.fecha_pedido >= fecha_desde_dt)
+		except ValueError:
+			pass
+
+	if fecha_hasta:
+		try:
+			fecha_hasta_dt = datetime.fromisoformat(fecha_hasta.replace('Z', '+00:00'))
+			query = query.filter(PedidoDAO.fecha_pedido <= fecha_hasta_dt)
+		except ValueError:
+			pass
+
+	# Ordenar por fecha más reciente
+	query = query.order_by(PedidoDAO.fecha_pedido.desc())
+
+	# Aplicar paginación
 	pedidos = query.offset(skip).limit(limit).all()
 
 	return [
@@ -240,142 +399,59 @@ def api_get_orders(
 	]
 
 
-@router.get('/api/admin/users')
-def api_get_users(
+@router.get('/api/v1/admin/filter/products')
+def api_filter_products(
 	request: Request,
+	categoria_id: int = Query(None),
+	stock_min: int = Query(None),
+	stock_max: int = Query(None),
+	precio_min: float = Query(None),
+	precio_max: float = Query(None),
 	skip: int = Query(0, ge=0),
 	limit: int = Query(100, ge=1, le=200),
 	db: Session = Depends(get_db),
 ):
+	"""Filtrado avanzado de productos para el panel de admin"""
 	require_admin_auth(request)
-	clientes = db.query(ClienteDAO).offset(skip).limit(limit).all()
+
+	from sqlalchemy import and_
+
+	query = db.query(ProductoDAO)
+
+	# Aplicar filtros
+	if categoria_id:
+		query = query.filter(ProductoDAO.id_categoria == categoria_id)
+
+	if stock_min is not None:
+		query = query.filter(ProductoDAO.stock >= stock_min)
+
+	if stock_max is not None:
+		query = query.filter(ProductoDAO.stock <= stock_max)
+
+	if precio_min is not None:
+		query = query.filter(ProductoDAO.precio >= precio_min)
+
+	if precio_max is not None:
+		query = query.filter(ProductoDAO.precio <= precio_max)
+
+	# Ordenar por ID
+	query = query.order_by(ProductoDAO.id_producto)
+
+	# Aplicar paginación
+	productos = query.offset(skip).limit(limit).all()
+
 	return [
 		{
-			'id_cliente': c.id_cliente,
-			'nombre': c.nombre,
-			'apellido': c.apellido,
-			'correo': c.correo,
-			'telefono': c.telefono,
-			'direccion': c.direccion,
-			'ciudad': c.ciudad,
-			'pais': c.pais,
+			'id_producto': p.id_producto,
+			'nombre': p.nombre,
+			'descripcion': p.descripcion,
+			'precio': float(p.precio),
+			'stock': p.stock,
+			'id_categoria': p.id_categoria,
+			'imagen': p.imagen,
 		}
-		for c in clientes
+		for p in productos
 	]
 
 
-@router.delete('/api/admin/products/{producto_id}')
-def api_delete_product(producto_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	db_producto = db.query(ProductoDAO).filter(ProductoDAO.id_producto == producto_id).first()
-	if db_producto is None:
-		raise HTTPException(status_code=404, detail='Producto no encontrado')
-
-	db.delete(db_producto)
-	db.commit()
-	return {'message': 'Producto eliminado'}
-
-
-@router.delete('/api/admin/categories/{categoria_id}')
-def api_delete_category(categoria_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	db_categoria = db.query(CategoriaDAO).filter(CategoriaDAO.id_categoria == categoria_id).first()
-	if db_categoria is None:
-		raise HTTPException(status_code=404, detail='Categoría no encontrada')
-
-	db.delete(db_categoria)
-	db.commit()
-	return {'message': 'Categoría eliminada'}
-
-
-@router.delete('/api/admin/users/{cliente_id}')
-def api_delete_user(cliente_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	db_cliente = db.query(ClienteDAO).filter(ClienteDAO.id_cliente == cliente_id).first()
-	if db_cliente is None:
-		raise HTTPException(status_code=404, detail='Cliente no encontrado')
-
-	db.delete(db_cliente)
-	db.commit()
-	return {'message': 'Cliente eliminado'}
-
-
-@router.put('/api/admin/products/{producto_id}')
-async def api_update_product(producto_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	data = json.loads(await request.body())
-
-	db_producto = db.query(ProductoDAO).filter(ProductoDAO.id_producto == producto_id).first()
-	if db_producto is None:
-		raise HTTPException(status_code=404, detail='Producto no encontrado')
-
-	for key, value in data.items():
-		if hasattr(db_producto, key):
-			setattr(db_producto, key, value)
-
-	db.commit()
-	db.refresh(db_producto)
-	return {
-		'id_producto': db_producto.id_producto,
-		'nombre': db_producto.nombre,
-		'descripcion': db_producto.descripcion,
-		'precio': float(db_producto.precio),
-		'stock': db_producto.stock,
-		'id_categoria': db_producto.id_categoria,
-		'imagen': db_producto.imagen,
-	}
-
-
-@router.put('/api/admin/categories/{categoria_id}')
-async def api_update_category(categoria_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	data = json.loads(await request.body())
-
-	db_categoria = db.query(CategoriaDAO).filter(CategoriaDAO.id_categoria == categoria_id).first()
-	if db_categoria is None:
-		raise HTTPException(status_code=404, detail='Categoría no encontrada')
-
-	for key, value in data.items():
-		if hasattr(db_categoria, key):
-			setattr(db_categoria, key, value)
-
-	db.commit()
-	db.refresh(db_categoria)
-	return {
-		'id_categoria': db_categoria.id_categoria,
-		'nombre': db_categoria.nombre,
-		'descripcion': db_categoria.descripcion,
-	}
-
-
-@router.put('/api/admin/users/{cliente_id}')
-async def api_update_user(cliente_id: int, request: Request, db: Session = Depends(get_db)):
-	require_admin_auth(request)
-	data = json.loads(await request.body())
-
-	db_cliente = db.query(ClienteDAO).filter(ClienteDAO.id_cliente == cliente_id).first()
-	if db_cliente is None:
-		raise HTTPException(status_code=404, detail='Cliente no encontrado')
-
-	# Verificar si el correo ya existe en otro usuario
-	if 'correo' in data and data['correo'] != db_cliente.correo:
-		existing = db.query(ClienteDAO).filter(ClienteDAO.correo == data['correo']).first()
-		if existing:
-			raise HTTPException(status_code=400, detail='El correo ya está registrado')
-
-	for key, value in data.items():
-		if hasattr(db_cliente, key):
-			setattr(db_cliente, key, value)
-
-	db.commit()
-	db.refresh(db_cliente)
-	return {
-		'id_cliente': db_cliente.id_cliente,
-		'nombre': db_cliente.nombre,
-		'apellido': db_cliente.apellido,
-		'correo': db_cliente.correo,
-		'telefono': db_cliente.telefono,
-		'direccion': db_cliente.direccion,
-		'ciudad': db_cliente.ciudad,
-		'pais': db_cliente.pais,
-	}
+# other routes

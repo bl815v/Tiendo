@@ -1,0 +1,105 @@
+<div class="content-header">
+    <h2>⏳ Pedidos Pendientes</h2>
+    <button onclick="loadPendingOrders()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="table-container">
+    <table id="pending-orders-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente ID</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="pending-orders-body">
+            <tr>
+                <td colspan="6">Cargando pedidos pendientes...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadPendingOrders() {
+        const tbody = document.getElementById('pending-orders-body');
+        tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+
+        try {
+            const response = await fetch('/api/v1/pedidos');
+            const orders = await response.json();
+
+            const pendingOrders = orders.filter(order => order.estado === 'pendiente');
+
+            if (pendingOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay pedidos pendientes</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pendingOrders.map(order => `
+                <tr>
+                    <td>${order.id_pedido}</td>
+                    <td>${order.id_cliente}</td>
+                    <td>${new Date(order.fecha_pedido).toLocaleString()}</td>
+                    <td>$${order.total.toFixed(2)}</td>
+                    <td><span class="status status-pendiente">${order.estado}</span></td>
+                    <td class="actions">
+                        <button onclick="markAsProcessing(${order.id_pedido})" class="btn-process">⚙️ Procesar</button>
+                        <button onclick="deleteOrder(${order.id_pedido})" class="btn-delete">🗑️ Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="6">Error cargando pedidos</td></tr>';
+        }
+    }
+
+    async function markAsProcessing(id) {
+        try {
+            const response = await fetch(`/api/v1/pedidos/${id}/estado`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ estado: 'procesando' })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Pedido marcado como procesando');
+                loadPendingOrders();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    async function deleteOrder(id) {
+        if (!confirm('¿Estás seguro de eliminar este pedido pendiente?')) return;
+
+        try {
+            const response = await fetch(`/api/v1/pedidos/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Pedido eliminado');
+                loadPendingOrders();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    loadPendingOrders();
+</script>
