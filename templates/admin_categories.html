@@ -1,0 +1,125 @@
+<div class="content-header">
+    <h2>📋 Lista de Categorías</h2>
+    <button onclick="loadCategories()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="table-container">
+    <table id="categories-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="categories-body">
+            <tr><td colspan="4">Cargando categorías...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function loadCategories() {
+    const tbody = document.getElementById('categories-body');
+    tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+    
+    try {
+        const response = await fetch('/api/admin/categories');
+        const categories = await response.json();
+        
+        if (categories.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">No hay categorías registradas</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = categories.map(cat => `
+            <tr id="category-row-${cat.id_categoria}">
+                <td>${cat.id_categoria}</td>
+                <td><span class="editable" data-field="nombre">${cat.nombre}</span></td>
+                <td><span class="editable" data-field="descripcion">${cat.descripcion || ''}</span></td>
+                <td class="actions">
+                    <button onclick="editCategory(${cat.id_categoria})" class="btn-edit">✏️ Editar</button>
+                    <button onclick="saveCategory(${cat.id_categoria})" class="btn-save" style="display:none">💾 Guardar</button>
+                    <button onclick="deleteCategory(${cat.id_categoria})" class="btn-delete">🗑️ Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="4">Error cargando categorías</td></tr>';
+    }
+}
+
+function editCategory(id) {
+    const row = document.getElementById(`category-row-${id}`);
+    const editBtn = row.querySelector('.btn-edit');
+    const saveBtn = row.querySelector('.btn-save');
+    
+    row.querySelectorAll('.editable').forEach(span => {
+        const field = span.dataset.field;
+        const value = span.textContent;
+        
+        if (field === 'descripcion') {
+            span.innerHTML = `<textarea class="edit-input" data-field="${field}" style="width:100%;min-height:60px">${value}</textarea>`;
+        } else {
+            span.innerHTML = `<input type="text" class="edit-input" data-field="${field}" value="${value}" style="width:100%">`;
+        }
+    });
+    
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+}
+
+async function saveCategory(id) {
+    const row = document.getElementById(`category-row-${id}`);
+    const inputs = row.querySelectorAll('.edit-input');
+    const data = {};
+    
+    inputs.forEach(input => {
+        data[input.dataset.field] = input.value;
+    });
+    
+    try {
+        const response = await fetch(`/api/admin/categories/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const updated = await response.json();
+            alert('✅ Categoría actualizada');
+            loadCategories();
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('¿Estás seguro de eliminar esta categoría?')) return;
+    
+    try {
+        const response = await fetch(`/api/admin/categories/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('✅ Categoría eliminada');
+            loadCategories();
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+loadCategories();
+</script>

@@ -1,0 +1,80 @@
+<div class="content-header">
+    <h2>➕ Agregar Producto</h2>
+    <button onclick="window.location.reload()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="form-container">
+    <form id="add-product-form" class="admin-form">
+        <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion" rows="3" class="form-input"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="precio">Precio:</label>
+            <input type="number" id="precio" name="precio" step="0.01" min="0" required class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" min="0" required class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_categoria">Categoría ID:</label>
+            <input type="number" id="id_categoria" name="id_categoria" min="1" required class="form-input">
+            <small class="form-help">ID numérico de la categoría</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="imagen">URL de Imagen:</label>
+            <input type="url" id="imagen" name="imagen" class="form-input">
+            <small class="form-help">Opcional - URL completa de la imagen</small>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Guardar Producto</button>
+            <button type="button" onclick="window.adminCloseModal()" class="btn-secondary">Cancelar</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = {
+        nombre: document.getElementById('nombre').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio: parseFloat(document.getElementById('precio').value),
+        stock: parseInt(document.getElementById('stock').value),
+        id_categoria: parseInt(document.getElementById('id_categoria').value),
+        imagen: document.getElementById('imagen').value || null
+    };
+    
+    try {
+        const response = await fetch('/productos/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            alert('✅ Producto agregado exitosamente');
+            document.getElementById('add-product-form').reset();
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+});
+</script>

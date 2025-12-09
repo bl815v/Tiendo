@@ -1,0 +1,145 @@
+<div class="content-header">
+    <h2>📋 Lista de Productos</h2>
+    <button onclick="loadProducts()" class="btn-refresh">🔄 Refrescar</button>
+</div>
+
+<div class="table-container">
+    <table id="products-table" class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Categoría ID</th>
+                <th>Imagen</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="products-body">
+            <tr><td colspan="8">Cargando productos...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+async function loadProducts() {
+    const tbody = document.getElementById('products-body');
+    tbody.innerHTML = '<tr><td colspan="8">Cargando...</td></tr>';
+    
+    try {
+        const response = await fetch('/api/admin/products');
+        const products = await response.json();
+        
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8">No hay productos registrados</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = products.map(product => `
+            <tr id="product-row-${product.id_producto}">
+                <td>${product.id_producto}</td>
+                <td><span class="editable" data-field="nombre">${product.nombre}</span></td>
+                <td><span class="editable" data-field="descripcion">${product.descripcion || ''}</span></td>
+                <td><span class="editable" data-field="precio" data-type="number">$${product.precio.toFixed(2)}</span></td>
+                <td><span class="editable" data-field="stock" data-type="number">${product.stock}</span></td>
+                <td><span class="editable" data-field="id_categoria" data-type="number">${product.id_categoria}</span></td>
+                <td><span class="editable" data-field="imagen">${product.imagen || ''}</span></td>
+                <td class="actions">
+                    <button onclick="editProduct(${product.id_producto})" class="btn-edit">✏️ Editar</button>
+                    <button onclick="saveProduct(${product.id_producto})" class="btn-save" style="display:none">💾 Guardar</button>
+                    <button onclick="deleteProduct(${product.id_producto})" class="btn-delete">🗑️ Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="8">Error cargando productos</td></tr>';
+    }
+}
+
+function editProduct(id) {
+    const row = document.getElementById(`product-row-${id}`);
+    const editBtn = row.querySelector('.btn-edit');
+    const saveBtn = row.querySelector('.btn-save');
+    
+    // Convertir celdas editables en inputs
+    row.querySelectorAll('.editable').forEach(span => {
+        const field = span.dataset.field;
+        const type = span.dataset.type || 'text';
+        const value = type === 'number' && field === 'precio' 
+            ? span.textContent.replace('$', '')
+            : span.textContent;
+        
+        if (type === 'textarea') {
+            span.innerHTML = `<textarea class="edit-input" data-field="${field}" style="width:100%;min-height:60px">${value}</textarea>`;
+        } else {
+            span.innerHTML = `<input type="${type}" class="edit-input" data-field="${field}" value="${value}" style="width:100%">`;
+        }
+    });
+    
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+}
+
+async function saveProduct(id) {
+    const row = document.getElementById(`product-row-${id}`);
+    const inputs = row.querySelectorAll('.edit-input');
+    const data = {};
+    
+    inputs.forEach(input => {
+        const field = input.dataset.field;
+        let value = input.value;
+        
+        if (input.type === 'number') {
+            value = field === 'precio' ? parseFloat(value) : parseInt(value);
+        }
+        
+        data[field] = value;
+    });
+    
+    try {
+        const response = await fetch(`/api/admin/products/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const updated = await response.json();
+            alert('✅ Producto actualizado');
+            loadProducts(); // Recargar la tabla
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+async function deleteProduct(id) {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+    
+    try {
+        const response = await fetch(`/api/admin/products/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('✅ Producto eliminado');
+            loadProducts();
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + error.detail);
+        }
+    } catch (error) {
+        alert('❌ Error de conexión');
+    }
+}
+
+// Cargar productos al inicio
+loadProducts();
+</script>
