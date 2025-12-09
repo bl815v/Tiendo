@@ -28,7 +28,6 @@ import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from controller.admin_routers import router as admin_router
 from controller.api_routers import router as api_router
@@ -50,6 +49,14 @@ app.add_middleware(
 	allow_methods=['*'],
 	allow_headers=['*'],
 )
+
+if getattr(sys, 'frozen', False):
+	BASE_PATH = getattr(sys, '_MEIPASS', os.path.abspath('.'))
+else:
+	BASE_PATH = os.path.abspath('.')
+
+static_path = os.path.join(BASE_PATH, 'static')
+app.mount('/static', StaticFiles(directory=static_path), name='static')
 
 app.include_router(api_router, prefix='/api/v1')
 app.include_router(admin_router)

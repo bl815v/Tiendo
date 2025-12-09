@@ -25,9 +25,7 @@ Dependencies:
 import os
 import sys
 
-from fastapi import APIRouter, FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from starlette.responses import HTMLResponse
 
@@ -49,9 +47,6 @@ if getattr(sys, 'frozen', False):
 	BASE_PATH = getattr(sys, '_MEIPASS', os.path.abspath('.'))
 else:
 	BASE_PATH = os.path.abspath('.')
-
-static_path = os.path.join(BASE_PATH, 'static')
-router.mount('/static', StaticFiles(directory=static_path), name='static')
 
 templates_path = os.path.join(BASE_PATH, 'templates')
 templates = Jinja2Templates(directory=templates_path)
