@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from data.database import get_db
-from model.categoria import CategoriaDTO, CategoriaDAO
+from model.categoria import CategoriaDTO, CategoriaDAO, CategoriaCreateDTO  # Añadir CategoriaCreateDTO
 
 router = APIRouter(prefix="/categorias", tags=["categorias"])
 
 
 @router.post("/", response_model=CategoriaDTO)
-def crear_categoria(categoria: CategoriaDTO, db: Session = Depends(get_db)):
+def crear_categoria(categoria: CategoriaCreateDTO, db: Session = Depends(get_db)):  # Usar CategoriaCreateDTO
     db_categoria = CategoriaDAO(**categoria.model_dump())
     db.add(db_categoria)
     db.commit()
@@ -35,7 +35,7 @@ def obtener_categoria(categoria_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{categoria_id}", response_model=CategoriaDTO)
 def actualizar_categoria(
-    categoria_id: int, categoria: CategoriaDTO, db: Session = Depends(get_db)
+    categoria_id: int, categoria: CategoriaCreateDTO, db: Session = Depends(get_db)  # Usar CategoriaCreateDTO
 ):
     db_categoria = (
         db.query(CategoriaDAO).filter(CategoriaDAO.id_categoria == categoria_id).first()

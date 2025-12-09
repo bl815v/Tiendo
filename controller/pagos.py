@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from data.database import get_db
-from model.pago import PagoDTO, PagoDAO
+from model.pago import PagoDTO, PagoDAO, PagoCreateDTO  # Agregar PagoCreateDTO
 
 router = APIRouter(prefix="/pagos", tags=["pagos"])
 
 
 @router.post("/", response_model=PagoDTO)
-def crear_pago(pago: PagoDTO, db: Session = Depends(get_db)):
+def crear_pago(pago: PagoCreateDTO, db: Session = Depends(get_db)):  # Usar PagoCreateDTO
     pago_data = pago.model_dump()
     pago_data["metodo"] = pago_data["metodo"].value
     db_pago = PagoDAO(**pago_data)
@@ -40,7 +40,7 @@ def obtener_pagos_por_pedido(pedido_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{pago_id}", response_model=PagoDTO)
-def actualizar_pago(pago_id: int, pago: PagoDTO, db: Session = Depends(get_db)):
+def actualizar_pago(pago_id: int, pago: PagoCreateDTO, db: Session = Depends(get_db)):  # Usar PagoCreateDTO
     db_pago = db.query(PagoDAO).filter(PagoDAO.id_pago == pago_id).first()
     if db_pago is None:
         raise HTTPException(status_code=404, detail="Pago no encontrado")

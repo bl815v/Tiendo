@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from data.database import get_db
-from model.envio import EnvioDTO, EnvioDAO
+from model.envio import EnvioDTO, EnvioDAO, EnvioCreateDTO
 
 router = APIRouter(prefix="/envios", tags=["envios"])
 
 
 @router.post("/", response_model=EnvioDTO)
-def crear_envio(envio: EnvioDTO, db: Session = Depends(get_db)):
+def crear_envio(envio: EnvioCreateDTO, db: Session = Depends(get_db)):  # Usar EnvioCreateDTO
     db_envio = EnvioDAO(**envio.model_dump())
     db.add(db_envio)
     db.commit()
@@ -42,7 +42,7 @@ def obtener_envio_por_pedido(pedido_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{envio_id}", response_model=EnvioDTO)
-def actualizar_envio(envio_id: int, envio: EnvioDTO, db: Session = Depends(get_db)):
+def actualizar_envio(envio_id: int, envio: EnvioCreateDTO, db: Session = Depends(get_db)):  # Usar EnvioCreateDTO
     db_envio = db.query(EnvioDAO).filter(EnvioDAO.id_envio == envio_id).first()
     if db_envio is None:
         raise HTTPException(status_code=404, detail="Envío no encontrado")

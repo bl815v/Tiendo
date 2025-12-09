@@ -9,19 +9,32 @@ from model.pedido import (
     DetallePedidoDTO,
     DetallePedidoDAO,
     EstadoPedido,
+    PedidoCreateDTO,          # Agregar
+    DetallePedidoCreateDTO,   # Agregar
 )
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
 
 
 @router.post("/", response_model=PedidoDTO)
-def crear_pedido(pedido: PedidoDTO, db: Session = Depends(get_db)):
+def crear_pedido(pedido: PedidoCreateDTO, db: Session = Depends(get_db)):  # Usar PedidoCreateDTO
     pedido_data = pedido.model_dump(exclude={"detalles"})
     pedido_data["estado"] = pedido_data["estado"].value
     db_pedido = PedidoDAO(**pedido_data)
     db.add(db_pedido)
     db.commit()
     db.refresh(db_pedido)
+    
+    # Agregar detalles si existen
+    if pedido.detalles:
+        for detalle in pedido.detalles:
+            detalle_data = detalle.model_dump()
+            detalle_data["id_pedido"] = db_pedido.id_pedido
+            db_detalle = DetallePedidoDAO(**detalle_data)
+            db.add(db_detalle)
+        db.commit()
+        db.refresh(db_pedido)
+        
     return db_pedido
 
 
@@ -46,7 +59,7 @@ def obtener_pedidos_por_cliente(cliente_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{pedido_id}", response_model=PedidoDTO)
-def actualizar_pedido(pedido_id: int, pedido: PedidoDTO, db: Session = Depends(get_db)):
+def actualizar_pedido(pedido_id: int, pedido: PedidoCreateDTO, db: Session = Depends(get_db)):  # Usar PedidoCreateDTO
     db_pedido = db.query(PedidoDAO).filter(PedidoDAO.id_pedido == pedido_id).first()
     if db_pedido is None:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
@@ -88,7 +101,7 @@ def eliminar_pedido(pedido_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{pedido_id}/detalles", response_model=DetallePedidoDTO)
 def agregar_detalle_pedido(
-    pedido_id: int, detalle: DetallePedidoDTO, db: Session = Depends(get_db)
+    pedido_id: int, detalle: DetallePedidoCreateDTO, db: Session = Depends(get_db)  # Usar DetallePedidoCreateDTO
 ):
     detalle_data = detalle.model_dump()
     detalle_data["id_pedido"] = pedido_id

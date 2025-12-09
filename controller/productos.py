@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from data.database import get_db
-from model.producto import ProductoDTO, ProductoDAO
+from model.producto import ProductoDTO, ProductoDAO, ProductoCreateDTO  # Agregar ProductoCreateDTO
 
 router = APIRouter(prefix="/productos", tags=["productos"])
 
 
 @router.post("/", response_model=ProductoDTO)
-def crear_producto(producto: ProductoDTO, db: Session = Depends(get_db)):
+def crear_producto(producto: ProductoCreateDTO, db: Session = Depends(get_db)):  # Usar ProductoCreateDTO
     db_producto = ProductoDAO(**producto.model_dump())
     db.add(db_producto)
     db.commit()
@@ -35,7 +35,7 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{producto_id}", response_model=ProductoDTO)
 def actualizar_producto(
-    producto_id: int, producto: ProductoDTO, db: Session = Depends(get_db)
+    producto_id: int, producto: ProductoCreateDTO, db: Session = Depends(get_db)  # Usar ProductoCreateDTO
 ):
     db_producto = (
         db.query(ProductoDAO).filter(ProductoDAO.id_producto == producto_id).first()

@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from data.database import get_db
-from model.carrito import CarritoDTO, CarritoDAO, DetalleCarritoDTO, DetalleCarritoDAO
+from model.carrito import CarritoDTO, CarritoDAO, DetalleCarritoDTO, DetalleCarritoDAO, CarritoCreateDTO, DetalleCarritoCreateDTO
 
 router = APIRouter(prefix="/carritos", tags=["carritos"])
 
 
 @router.post("/", response_model=CarritoDTO)
-def crear_carrito(carrito: CarritoDTO, db: Session = Depends(get_db)):
+def crear_carrito(carrito: CarritoCreateDTO, db: Session = Depends(get_db)):  # Usar CarritoCreateDTO
     db_carrito = CarritoDAO(**carrito.model_dump(exclude={"detalles"}))
     db.add(db_carrito)
     db.commit()
@@ -39,7 +39,7 @@ def obtener_carritos_por_cliente(cliente_id: int, db: Session = Depends(get_db))
 
 @router.put("/{carrito_id}", response_model=CarritoDTO)
 def actualizar_carrito(
-    carrito_id: int, carrito: CarritoDTO, db: Session = Depends(get_db)
+    carrito_id: int, carrito: CarritoCreateDTO, db: Session = Depends(get_db)  # Usar CarritoCreateDTO
 ):
     db_carrito = (
         db.query(CarritoDAO).filter(CarritoDAO.id_carrito == carrito_id).first()
@@ -70,7 +70,7 @@ def eliminar_carrito(carrito_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{carrito_id}/detalles", response_model=DetalleCarritoDTO)
 def agregar_detalle_carrito(
-    carrito_id: int, detalle: DetalleCarritoDTO, db: Session = Depends(get_db)
+    carrito_id: int, detalle: DetalleCarritoCreateDTO, db: Session = Depends(get_db)  # Usar DetalleCarritoCreateDTO
 ):
     detalle_data = detalle.model_dump()
     detalle_data["id_carrito"] = carrito_id

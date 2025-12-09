@@ -1,55 +1,70 @@
 <div class="register-container">
   <h2 class="register-title">Crear cuenta</h2>
 
-  <form class="register-form">
+  <form id="form-registro" class="register-form">
     <div class="form-grid">
       <div class="form-group">
-        <label>Nombre</label>
-        <input type="text" placeholder="Tu nombre" />
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required />
       </div>
 
       <div class="form-group">
-        <label>Apellido</label>
-        <input type="text" placeholder="Tu apellido" />
+        <label for="apellido">Apellido</label>
+        <input type="text" id="apellido" name="apellido" placeholder="Tu apellido" required />
       </div>
 
       <div class="form-group">
-        <label>Correo</label>
-        <input type="email" placeholder="ejemplo@correo.com" />
+        <label for="correo">Correo</label>
+        <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com" required />
       </div>
 
       <div class="form-group">
-        <label>Teléfono</label>
-        <input type="text" placeholder="+57 300 000 0000" />
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contrasena" name="contrasena" placeholder="********" required minlength="6" />
+        <small style="color: #666; font-size: 12px;">Mínimo 6 caracteres</small>
       </div>
 
       <div class="form-group">
-        <label>País</label>
-        <input type="text" placeholder="Colombia" />
+        <label for="confirmar_contrasena">Confirmar Contraseña</label>
+        <input type="password" id="confirmar_contrasena" name="confirmar_contrasena" placeholder="********" required />
       </div>
 
       <div class="form-group">
-        <label>Ciudad</label>
-        <input type="text" placeholder="Bogotá" />
+        <label for="telefono">Teléfono</label>
+        <input type="tel" id="telefono" name="telefono" placeholder="+57 300 000 0000" />
+      </div>
+
+      <div class="form-group">
+        <label for="pais">País</label>
+        <input type="text" id="pais" name="pais" placeholder="Colombia" />
+      </div>
+
+      <div class="form-group">
+        <label for="ciudad">Ciudad</label>
+        <input type="text" id="ciudad" name="ciudad" placeholder="Bogotá" />
       </div>
 
       <div class="form-group form-full">
-        <label>Dirección</label>
-        <input type="text" placeholder="Calle 00 #00-00" />
+        <label for="direccion">Dirección</label>
+        <input type="text" id="direccion" name="direccion" placeholder="Calle 00 #00-00" />
       </div>
     </div>
 
     <div class="btn-crear-wrapper">
-      <button class="btn-crear">Crear cuenta</button>
+      <button type="submit" class="btn-crear">Crear cuenta</button>
     </div>
+
+    <p class="login-switch">
+      ¿Ya tienes cuenta? <span id="go-login">Iniciar sesión</span>
+    </p>
   </form>
 </div>
 
 <style>
   .register-container {
-    padding: 20px;
-    width: 100%;
-    max-width: 520px;
+    padding: 30px;
+    width: 90%;
+    max-width: 600px;
     margin: 0 auto;
     display: block;
   }
@@ -68,7 +83,7 @@
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 18px;
+    gap: 20px;
   }
 
   .form-group {
@@ -85,11 +100,12 @@
   }
 
   .form-group input {
-    padding: 10px;
+    padding: 12px;
     border: 2px solid #004b2d;
     border-radius: 10px;
     font-size: 15px;
     outline: none;
+    width: 90%;
   }
 
   .form-group input:focus {
@@ -101,7 +117,7 @@
   }
 
   .btn-crear-wrapper {
-    margin-top: 25px;
+    margin-top: 30px;
     text-align: center;
   }
 
@@ -109,15 +125,45 @@
     background: #004b2d;
     color: white;
     border: none;
-    padding: 12px 28px;
+    padding: 14px 30px;
     font-size: 16px;
     border-radius: 25px;
     cursor: pointer;
     transition: 0.3s;
+    width: 100%;
   }
 
   .btn-crear:hover {
     background: #00663f;
+  }
+
+  .login-switch {
+    font-size: 14px;
+    text-align: center;
+    margin-top: 15px;
+    color: #2f3e36;
+  }
+
+  #go-login {
+    color: #004b2d;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  #go-login:hover {
+    text-decoration: underline;
+  }
+
+  .password-match {
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+
+  .password-mismatch {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
   }
 
   @media (max-width: 480px) {
@@ -127,6 +173,11 @@
 
     .form-full {
       grid-column: span 1;
+    }
+
+    .register-container {
+      padding: 20px;
+      max-width: 100%;
     }
   }
 </style>
