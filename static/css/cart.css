@@ -130,7 +130,7 @@ header {
   transform: translateY(-2px);
 }
 
-.pm-card input:checked + .pm-card-content {
+.pm-card input:checked+.pm-card-content {
   border-color: #007a4d;
   background: #e6fff3;
 }

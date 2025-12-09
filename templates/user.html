@@ -1,123 +1,100 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
 
-    <link rel="icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="{{ url_for('static', path='icon/favicon.svg') }}"
-    />
-    <link
-      rel="shortcut icon"
-      href="{{ url_for('static', path='icon/favicon.ico') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="{{ url_for('static', path='icon/apple-touch-icon.png') }}"
-    />
+<head>
+  <meta charset="UTF-8" />
 
-    <meta name="apple-mobile-web-app-title" content="Tiendo" />
+  <link rel="icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='icon/favicon.svg') }}" />
+  <link rel="shortcut icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='icon/apple-touch-icon.png') }}" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-title" content="Tiendo" />
 
-    <title>Tiendo | Mi cuenta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', path='css/user.css') }}"
-    />
-    <script src="{{ url_for('static', path='js/user.js') }}" defer></script>
-  </head>
+  <title>Tiendo | Mi cuenta</title>
 
-  <body>
-    <header>
-      <div class="logo">
-        <img
-          src="{{ url_for('static', path='icon/favicon.ico') }}"
-          alt="logo"
-        />
-        <span>Tiendo</span>
-      </div>
-    </header>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/user.css') }}" />
+  <script src="{{ url_for('static', path='js/user.js') }}" defer></script>
+</head>
 
-    <div class="user-container">
-      <aside class="sidebar">
-        <div class="user-info">
-          <div class="user-avatar">👤</div>
-          <p id="user-name">Nombre Apellido</p>
-        </div>
-
-        <nav class="menu">
-          <button class="menu-btn active" data-section="pedidos">
-            Pedidos
-          </button>
-          <button class="menu-btn" data-section="historial">Historial</button>
-          <button class="menu-btn" data-section="perfil">Tu perfil</button>
-          <button class="menu-btn" data-section="direccion">
-            Tu dirección
-          </button>
-        </nav>
-      </aside>
-
-      <main class="content">
-        <section id="section-pedidos" class="content-section active">
-          <h2>Mis pedidos</h2>
-          <div id="pedidos-list" class="listado"></div>
-        </section>
-
-        <section id="section-historial" class="content-section">
-          <h2>Historial de compras</h2>
-          <div id="historial-list" class="listado"></div>
-        </section>
-
-        <section id="section-perfil" class="content-section">
-          <h2>Tu perfil</h2>
-
-          <form class="form-user">
-            <label>Nombre</label>
-            <input type="text" id="user-nombre" placeholder="Nombre" />
-
-            <label>Apellido</label>
-            <input type="text" id="user-apellido" placeholder="Apellido" />
-
-            <label>Correo</label>
-            <input type="email" id="user-correo" placeholder="Correo" />
-
-            <label>Teléfono</label>
-            <input
-              type="text"
-              id="user-telefono"
-              placeholder="+57 300 000 0000"
-            />
-
-            <button class="btn-guardar">Guardar cambios</button>
-          </form>
-        </section>
-
-        <section id="section-direccion" class="content-section">
-          <h2>Tu dirección</h2>
-
-          <form class="form-user">
-            <label>País</label>
-            <input type="text" id="user-pais" placeholder="País" />
-
-            <label>Ciudad</label>
-            <input type="text" id="user-ciudad" placeholder="Ciudad" />
-
-            <label>Dirección</label>
-            <input
-              type="text"
-              id="user-direccion"
-              placeholder="Calle 00 #00-00"
-            />
-
-            <button class="btn-guardar">Guardar dirección</button>
-          </form>
-        </section>
-      </main>
+<body>
+  <header>
+    <div class="logo">
+      <img src="{{ url_for('static', path='icon/favicon.ico') }}" alt="logo" />
+      <span>Tiendo</span>
     </div>
-  </body>
+  </header>
+
+  <div class="user-container">
+    <aside class="sidebar">
+      <div class="user-info">
+        <div class="user-avatar">👤</div>
+        <p id="user-name">Nombre Apellido</p>
+      </div>
+
+      <nav class="menu">
+        <button class="menu-btn active" data-section="pedidos">
+          Pedidos
+        </button>
+        <button class="menu-btn" data-section="historial">Historial</button>
+        <button class="menu-btn" data-section="perfil">Tu perfil</button>
+        <button class="menu-btn" data-section="direccion">
+          Tu dirección
+        </button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section id="section-pedidos" class="content-section active">
+        <h2>Mis pedidos</h2>
+        <div id="pedidos-list" class="listado"></div>
+      </section>
+
+      <section id="section-historial" class="content-section">
+        <h2>Historial de compras</h2>
+        <div id="historial-list" class="listado"></div>
+      </section>
+
+      <section id="section-perfil" class="content-section">
+        <h2>Tu perfil</h2>
+
+        <form class="form-user">
+          <label>Nombre</label>
+          <input type="text" id="user-nombre" placeholder="Nombre" />
+
+          <label>Apellido</label>
+          <input type="text" id="user-apellido" placeholder="Apellido" />
+
+          <label>Correo</label>
+          <input type="email" id="user-correo" placeholder="Correo" />
+
+          <label>Teléfono</label>
+          <input type="text" id="user-telefono" placeholder="+57 300 000 0000" />
+
+          <button class="btn-guardar">Guardar cambios</button>
+        </form>
+      </section>
+
+      <section id="section-direccion" class="content-section">
+        <h2>Tu dirección</h2>
+
+        <form class="form-user">
+          <label>País</label>
+          <input type="text" id="user-pais" placeholder="País" />
+
+          <label>Ciudad</label>
+          <input type="text" id="user-ciudad" placeholder="Ciudad" />
+
+          <label>Dirección</label>
+          <input type="text" id="user-direccion" placeholder="Calle 00 #00-00" />
+
+          <button class="btn-guardar">Guardar dirección</button>
+        </form>
+      </section>
+    </main>
+  </div>
+</body>
+
 </html>

@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const menuBtns = document.querySelectorAll(".menu-btn");
   const sections = document.querySelectorAll(".content-section");
 
-  // Manejar navegación entre secciones
   menuBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
       menuBtns.forEach((b) => b.classList.remove("active"));
@@ -13,13 +12,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Asumimos cliente con ID 1 (debes implementar autenticación)
   const clienteId = 1;
 
   try {
-    // Cargar datos del cliente
     const clienteResponse = await fetch(`/api/v1/clientes/${clienteId}`);
-    
+
     if (!clienteResponse.ok) {
       throw new Error('Error cargando datos del cliente');
     }
@@ -27,20 +24,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const clienteData = await clienteResponse.json();
     renderUsuario(clienteData);
 
-    // Cargar pedidos del cliente
     const pedidosResponse = await fetch(`/api/v1/pedidos/cliente/${clienteId}`);
-    
+
     if (pedidosResponse.ok) {
       const pedidosData = await pedidosResponse.json();
       renderPedidos(pedidosData);
     }
 
-    // Configurar formulario de edición
     const formEditar = document.getElementById("form-editar-usuario");
     if (formEditar) {
       formEditar.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         const datosActualizados = {
           nombre: document.getElementById("user-nombre").value,
           apellido: document.getElementById("user-apellido").value,
@@ -68,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const clienteActualizado = await response.json();
           alert("Datos actualizados correctamente");
           renderUsuario(clienteActualizado);
-          
+
         } catch (error) {
           console.error('Error actualizando datos:', error);
           alert(`Error: ${error.message}`);
@@ -80,9 +75,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error('Error cargando datos de usuario:', error);
   }
 
+  /**
+   * Renders user information on the page by updating the text content and values of specific DOM elements
+   * with the corresponding properties from the provided cliente object.
+   *
+   * @param {Object} cliente - The user object containing user information.
+   * @param {string} cliente.nombre - The user's first name.
+   * @param {string} cliente.apellido - The user's last name.
+   * @param {string} [cliente.correo] - The user's email address.
+   * @param {string} [cliente.telefono] - The user's phone number.
+   * @param {string} [cliente.pais] - The user's country.
+   * @param {string} [cliente.ciudad] - The user's city.
+   * @param {string} [cliente.direccion] - The user's address.
+   */
   function renderUsuario(cliente) {
     document.getElementById("user-name").textContent = `${cliente.nombre} ${cliente.apellido}`;
-    
+
     if (document.getElementById("user-nombre")) {
       document.getElementById("user-nombre").value = cliente.nombre || "";
     }
@@ -106,28 +114,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  /**
+   * Renders a list of user orders (pedidos) into the DOM element with id "pedidos-list".
+   * For each order, fetches its details, associated products, and shipping information,
+   * then displays them in a structured format. Also sets up toggle buttons to show/hide
+   * shipping details for each order.
+   *
+   * @async
+   * @param {Array<Object>} pedidos - Array of order objects to render. Each object should contain at least `id_pedido`, `estado`, `fecha_pedido`, and `total`.
+   * @returns {Promise<void>} Resolves when all orders have been rendered.
+   */
   async function renderPedidos(pedidos) {
     const cont = document.getElementById("pedidos-list");
-    
+
     if (!cont) return;
-    
+
     cont.innerHTML = "";
-    
+
     if (pedidos.length === 0) {
       cont.innerHTML = '<p class="no-orders">No tienes pedidos aún</p>';
       return;
     }
 
     for (const pedido of pedidos) {
-      // Obtener detalles del pedido
       const detallesResponse = await fetch(`/api/v1/pedidos/${pedido.id_pedido}/detalles`);
       let detalles = [];
-      
+
       if (detallesResponse.ok) {
         detalles = await detallesResponse.json();
       }
 
-      // Obtener envío si existe
       let envio = null;
       try {
         const envioResponse = await fetch(`/api/v1/envios/pedido/${pedido.id_pedido}`);
@@ -138,7 +154,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error('Error cargando envío:', error);
       }
 
-      // Para cada producto en los detalles, obtener información completa
       const productosCompletos = await Promise.all(
         detalles.map(async (detalle) => {
           try {
@@ -153,11 +168,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
       );
 
-      // Renderizar pedido
       const pedidoDiv = document.createElement("div");
       pedidoDiv.classList.add("item-pedido");
       pedidoDiv.setAttribute("data-pedido-id", pedido.id_pedido);
-      
+
       let productosHTML = "";
       productosCompletos.forEach((producto, index) => {
         if (producto) {
@@ -202,11 +216,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
         ` : ''}
       `;
-      
+
       cont.appendChild(pedidoDiv);
     }
 
-    // Configurar botones de rastreo
     document.querySelectorAll(".btn-rastrear").forEach((btn) => {
       btn.addEventListener("click", () => {
         const detalle = btn.nextElementSibling;

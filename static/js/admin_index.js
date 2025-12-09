@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then((html) => {
           contentArea.innerHTML = html;
 
-          // Ejecutar scripts después de insertar el HTML
           executeScripts(contentArea);
         })
         .catch((err) => {
@@ -59,6 +58,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 
+  /**
+   * Checks if the user's session is still valid by making a request to the server.
+   * If the session is invalid or an error occurs, redirects the user to the login page.
+   * 
+   * @async
+   * @function checkSession
+   * @returns {Promise<void>}
+   * @throws {Error} Logs any fetch errors to the console but handles them gracefully by redirecting to login.
+   */
   async function checkSession() {
     try {
       const response = await fetch("/admin/check-session", {
@@ -74,40 +82,54 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Opens a modal dialog and populates it with the provided HTML content.
+   * @param {string} html - The HTML content to be displayed in the modal body
+   * @returns {void}
+   */
   function openModal(html) {
     modalBody.innerHTML = html;
     modal.classList.remove("hidden");
     modal.setAttribute("aria-hidden", "false");
 
-    // Ejecutar scripts en el modal
     setTimeout(() => executeScripts(modalBody), 100);
   }
 
+  /**
+   * Closes the modal dialog by hiding it, updating its accessibility attribute,
+   * and clearing its content.
+   *
+   * @function
+   * @returns {void}
+   */
   function closeModal() {
     modal.classList.add("hidden");
     modal.setAttribute("aria-hidden", "true");
     modalBody.innerHTML = "";
   }
 
-  // Función para ejecutar scripts después de insertar HTML
+  /**
+   * Executes all <script> elements found within the specified container element.
+   * For external scripts (with a src attribute), the script is appended to the document head.
+   * For inline scripts, the script is executed by creating a new script element and appending it to the body.
+   * 
+   * @param {HTMLElement} container - The DOM element containing <script> elements to execute.
+   */
   function executeScripts(container) {
     const scripts = container.querySelectorAll("script");
 
     scripts.forEach((oldScript) => {
       const newScript = document.createElement("script");
 
-      // Copiar todos los atributos
       Array.from(oldScript.attributes).forEach(attr => {
         newScript.setAttribute(attr.name, attr.value);
       });
 
-      // Si tiene src, cargar el script externo
       if (oldScript.src) {
         newScript.src = oldScript.src;
         newScript.async = false;
         document.head.appendChild(newScript);
       } else {
-        // Script inline - ejecutar el código
         try {
           newScript.textContent = oldScript.textContent;
           document.body.appendChild(newScript);

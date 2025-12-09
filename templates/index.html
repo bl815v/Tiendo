@@ -1,48 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
 
-    <link rel="icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="{{ url_for('static', path='icon/favicon.svg') }}"
-    />
-    <link
-      rel="shortcut icon"
-      href="{{ url_for('static', path='icon/favicon.ico') }}"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="{{ url_for('static', path='icon/apple-touch-icon.png') }}"
-    />
+<head>
+  <meta charset="UTF-8" />
 
-    <meta name="apple-mobile-web-app-title" content="Tiendo" />
+  <link rel="icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='icon/favicon.svg') }}" />
+  <link rel="shortcut icon" href="{{ url_for('static', path='icon/favicon.ico') }}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='icon/apple-touch-icon.png') }}" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="apple-mobile-web-app-title" content="Tiendo" />
 
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', path='css/index.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', path='css/header.css') }}"
-    />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <script defer src="{{ url_for('static', path='js/header.js') }}"></script>
-    <script defer src="{{ url_for('static', path='js/index.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/index.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/header.css') }}" />
 
-    <title>Tiendo</title>
-  </head>
+  <script defer src="{{ url_for('static', path='js/header.js') }}"></script>
+  <script defer src="{{ url_for('static', path='js/index.js') }}"></script>
 
-  <body>
-    {% include 'header.html' %}
+  <title>Tiendo</title>
+</head>
 
-    <main>
-      <section class="grid-productos" id="grid-productos"></section>
-    </main>
-  </body>
+<body>
+  {% include 'header.html' %}
+
+  <main>
+    <section class="grid-productos" id="grid-productos"></section>
+  </main>
+</body>
+
 </html>

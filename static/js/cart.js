@@ -1,35 +1,30 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  // Asumimos que el usuario tiene ID 1 (debes implementar autenticación)
   const clienteId = 1;
-  
+
   try {
-    // Obtener carritos del cliente
     const response = await fetch(`/api/v1/carritos/cliente/${clienteId}`);
-    
+
     if (!response.ok) {
       throw new Error('Error al cargar el carrito');
     }
 
     const carritos = await response.json();
-    
+
     if (carritos.length === 0) {
       renderCarritoVacio();
       return;
     }
 
-    // Usar el primer carrito activo (deberías tener lógica para carrito activo)
     const carritoActivo = carritos[0];
-    
-    // Obtener detalles del carrito
+
     const detallesResponse = await fetch(`/api/v1/carritos/${carritoActivo.id_carrito}/detalles`);
-    
+
     if (!detallesResponse.ok) {
       throw new Error('Error al cargar detalles del carrito');
     }
 
     const detalles = await detallesResponse.json();
-    
-    // Para cada detalle, obtener información del producto
+
     const detallesCompletos = await Promise.all(
       detalles.map(async (detalle) => {
         const productoResponse = await fetch(`/api/v1/productos/${detalle.id_producto}`);
@@ -46,7 +41,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderCarrito(detallesCompletos);
 
-    // Configurar botones de pago
     const btnRef = document.getElementById("btn-ref");
     const refText = document.getElementById("ref-text");
     const btnPagar = document.getElementById("btn-pagar");
@@ -54,6 +48,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     let referenciaGenerada = null;
     btnPagar.disabled = true;
 
+    /**
+     * Updates the state of the payment button based on the selected payment method
+     * and whether a reference has been generated.
+     *
+     * Disables the payment button if no payment method is selected or if the
+     * reference has not been generated.
+     *
+     * @function
+     */
     function actualizarEstadoBoton() {
       const metodo = document.querySelector('input[name="pago"]:checked');
       btnPagar.disabled = !(metodo && referenciaGenerada);
@@ -72,7 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnPagar.addEventListener("click", async () => {
       const metodo = document.querySelector('input[name="pago"]:checked');
-      
+
       if (!metodo) {
         alert("Debes seleccionar un método de pago.");
         return;
@@ -84,10 +87,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       try {
-        // 1. Crear pedido
         const pedidoData = {
           id_cliente: clienteId,
-          estado: "PENDIENTE", // Usa el enum EstadoPedido
+          estado: "PENDIENTE",
           fecha_pedido: new Date().toISOString(),
           total: calcularTotal(detallesCompletos)
         };
@@ -99,10 +101,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         if (!pedidoResponse.ok) throw new Error('Error creando pedido');
-        
+
         const pedido = await pedidoResponse.json();
 
-        // 2. Crear detalles del pedido
         for (const detalle of detallesCompletos) {
           const detallePedido = {
             id_producto: detalle.id_producto,
@@ -117,7 +118,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         }
 
-        // 3. Crear pago
         const pagoData = {
           id_pedido: pedido.id_pedido,
           monto: calcularTotal(detallesCompletos),
@@ -132,10 +132,9 @@ document.addEventListener("DOMContentLoaded", async () => {
           body: JSON.stringify(pagoData)
         });
 
-        // 4. Opcional: Crear envío
         const envioData = {
           id_pedido: pedido.id_pedido,
-          direccion_envio: "Dirección del cliente", // Obtener de perfil
+          direccion_envio: "Dirección del cliente",
           ciudad: "Ciudad",
           pais: "País",
           estado_envio: "PREPARACION"
@@ -147,7 +146,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           body: JSON.stringify(envioData)
         });
 
-        // 5. Limpiar carrito
         await fetch(`/api/v1/carritos/${carritoActivo.id_carrito}`, {
           method: 'DELETE'
         });
@@ -166,16 +164,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderCarritoVacio();
   }
 
+  /**
+   * Calculates the total price from an array of detail objects.
+   *
+   * @param {Array<{precio_unitario: number, cantidad: number}>} detalles - Array of objects containing unit price and quantity.
+   * @returns {number} The total price calculated as the sum of (precio_unitario * cantidad) for each detail.
+   */
   function calcularTotal(detalles) {
     return detalles.reduce((total, detalle) => {
       return total + (detalle.precio_unitario * detalle.cantidad);
     }, 0);
   }
 
+  /**
+   * Renders the shopping cart items and updates subtotal, shipping, and total amounts in the DOM.
+   *
+   * @param {Array<Object>} detalles - Array of cart item details.
+   * @param {Object} detalles[].producto - Product information.
+   * @param {string} [detalles[].producto.imagen] - URL of the product image.
+   * @param {string} [detalles[].producto.nombre] - Name of the product.
+   * @param {number} detalles[].precio_unitario - Unit price of the product.
+   * @param {number} detalles[].cantidad - Quantity of the product in the cart.
+   *
+   * Updates the following DOM elements by their IDs:
+   * - "cart-items": Displays the list of cart products.
+   * - "subtotal": Shows the subtotal amount.
+   * - "envio": Shows the shipping cost (fixed at $8.99 if subtotal > 0).
+   * - "total": Shows the total amount (subtotal + shipping).
+   */
   function renderCarrito(detalles) {
     const contenedor = document.getElementById("cart-items");
     contenedor.innerHTML = "";
-    
+
     let subtotal = 0;
 
     detalles.forEach((detalle) => {
@@ -183,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const div = document.createElement("div");
       div.classList.add("cart-product");
-      
+
       div.innerHTML = `
         <img src="${detalle.producto?.imagen || 'https://via.placeholder.com/100x100'}" alt="${detalle.producto?.nombre || 'Producto'}">
         <div class="cart-product-info">
@@ -193,26 +213,26 @@ document.addEventListener("DOMContentLoaded", async () => {
           <p>Subtotal: $${(detalle.precio_unitario * detalle.cantidad).toFixed(2)}</p>
         </div>
       `;
-      
+
       contenedor.appendChild(div);
     });
 
     document.getElementById("subtotal").textContent = "$" + subtotal.toFixed(2);
-    
+
     const envio = subtotal > 0 ? 8.99 : 0;
     document.getElementById("envio").textContent = "$" + envio.toFixed(2);
-    
+
     document.getElementById("total").textContent = "$" + (subtotal + envio).toFixed(2);
   }
 
   function renderCarritoVacio() {
     const contenedor = document.getElementById("cart-items");
     contenedor.innerHTML = '<p class="empty-cart">El carrito está vacío</p>';
-    
+
     document.getElementById("subtotal").textContent = "$0.00";
     document.getElementById("envio").textContent = "$0.00";
     document.getElementById("total").textContent = "$0.00";
-    
+
     document.getElementById("btn-ref").disabled = true;
     document.getElementById("btn-pagar").disabled = true;
   }

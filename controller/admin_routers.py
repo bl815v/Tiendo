@@ -1,15 +1,70 @@
-import json
+"""Provide FastAPI routes for administrative dashboard functionality.
+
+Includes:
+- Admin authentication and session management
+- Product management endpoints
+- Category management endpoints
+- Order management endpoints
+- User management endpoints
+- Statistical data endpoints for admin dashboard
+- Filtering and debugging endpoints
+
+Authentication:
+All protected endpoints require valid admin session authentication via the
+require_admin_auth() dependency. Sessions are stored in-memory with 3600 second
+(1 hour) expiration.
+
+Session Management:
+- Sessions are created upon successful login with secure tokens (32-byte URL-safe)
+- Sessions are stored server-side with username, creation timestamp, and client IP
+- Sessions expire after 3600 seconds of inactivity
+- Logout clears both server-side session and client-side cookie
+
+Routes:
+GET/POST Routes:
+	- /admin/login: Admin login page and authentication
+	- /admin: Admin dashboard (requires auth)
+	- /admin/check-session: Session validation endpoint
+	- /admin/logout: Session cleanup and logout
+	- /admin/products: Products management page
+	- /admin/products/add: Product creation form
+	- /admin/categories: Categories management page
+	- /admin/categories/add: Category creation form
+	- /admin/orders: Orders management page
+	- /admin/orders/pending: Pending orders page
+	- /admin/users: Users management page
+	- /admin/users/activity: User activity page
+API Endpoints:
+	- /api/v1/admin/stats/products: Product statistics
+	- /api/v1/admin/stats/orders: Order statistics
+	- /api/v1/admin/stats/users: User statistics
+	- /api/v1/admin/debug: Debug information and connectivity check
+	- /api/v1/admin/filter/orders: Advanced order filtering
+	- /api/v1/admin/filter/products: Advanced product filtering
+
+Environment Variables:
+	- ADMIN_USER: Configured admin username for authentication
+	- ADMIN_PASS: Configured admin password for authentication
+
+Dependencies:
+	- FastAPI: Web framework
+	- SQLAlchemy: ORM for database operations
+	- Jinja2Templates: Template rendering
+	- dotenv: Environment variable loading
+
+"""
+
 import os
 import secrets
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.status import HTTP_302_FOUND, HTTP_401_UNAUTHORIZED
 
@@ -38,6 +93,26 @@ admin_sessions = {}
 
 
 def require_admin_auth(request: Request):
+	"""Validate and authenticates an admin user based on session cookie.
+
+	Checks for a valid admin session by verifying:
+	1. Session cookie exists in the request
+	2. Session ID exists in the admin_sessions storage
+	3. Session has not expired (within 3600 seconds)
+
+	Args:
+		request (Request): The incoming HTTP request object containing cookies.
+
+	Returns:
+		dict: The session data associated with the valid session ID.
+
+	Raises:
+		HTTPException:
+			- 401 Unauthorized if no session cookie is provided ('No autenticado')
+			- 401 Unauthorized if session ID is not found ('Sesión inválida')
+			- 401 Unauthorized if session has expired ('Sesión expirada')
+
+	"""
 	session_id = request.cookies.get('admin_session')
 
 	if not session_id:
@@ -56,11 +131,46 @@ def require_admin_auth(request: Request):
 
 @router.get('/admin/login', response_class=HTMLResponse)
 def admin_login(request: Request):
+	"""Handle admin login page request.
+
+	Args:
+		request (Request): The HTTP request object containing request metadata.
+
+	Returns:
+		TemplateResponse: A template response rendering the admin login page with the request
+		context.
+
+	"""
 	return templates.TemplateResponse('admin_login.html', {'request': request})
 
 
 @router.post('/admin/login')
 async def admin_login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+	"""Handle admin login POST request.
+
+	Authenticates the admin user by comparing provided credentials against
+	configured admin username and password. On successful authentication,
+	creates a session with a secure token and sets an httponly cookie.
+
+	Args:
+		request (Request): The FastAPI request object containing client information.
+		username (str): The admin username from the login form.
+		password (str): The admin password from the login form.
+
+	Returns:
+		TemplateResponse:
+			- If admin credentials are not configured: renders admin_login.html with
+			  server configuration error message.
+			- If credentials match: redirects to /admin with HTTP 302 status and sets
+			  admin_session cookie.
+			- If credentials do not match: renders admin_login.html with invalid
+			  credentials error message.
+
+	Side Effects:
+		- On successful authentication, adds a new session to admin_sessions dictionary
+		  with session_id as key, containing username, creation timestamp, and client IP.
+
+	"""
 	if not ADMIN_USER or not ADMIN_PASS:
 		return templates.TemplateResponse(
 			'admin_login.html',
@@ -94,6 +204,22 @@ async def admin_login_post(request: Request, username: str = Form(...), password
 
 @router.get('/admin', response_class=HTMLResponse)
 def admin_index(request: Request):
+	"""Handle the admin dashboard index page.
+
+	Requires admin authentication via session. If authentication fails,
+	redirects to the admin login page.
+
+	Args:
+		request (Request): The HTTP request object.
+
+	Returns:
+		TemplateResponse: Rendered admin_index.html template with request context
+						 and username from session data.
+
+	Raises:
+		HTTPException: Caught internally and handled with redirect to login.
+
+	"""
 	try:
 		session_data = require_admin_auth(request)
 	except HTTPException:
@@ -107,6 +233,25 @@ def admin_index(request: Request):
 
 @router.get('/admin/check-session')
 def check_session(request: Request):
+	"""Validate the current admin session and return session status.
+
+	This endpoint checks if the provided request contains a valid admin authentication session.
+	If the session is valid, it returns the admin's username. If the session is invalid or expired,
+	it returns an error response with HTTP 401 status code.
+
+	Args:
+		request (Request): The incoming HTTP request object containing session/authentication data.
+
+	Returns:
+		JSONResponse: A JSON response object containing:
+			- On success: {'status': 'ok', 'username': str} with HTTP 200 status
+			- On failure: {'status': 'error', 'message': 'Sesión inválida'} with HTTP 401 status
+
+	Raises:
+		HTTPException: Caught internally when authentication fails, converted to JSON error
+		response.
+
+	"""
 	try:
 		session_data = require_admin_auth(request)
 		return JSONResponse({'status': 'ok', 'username': session_data.get('username')})
@@ -116,6 +261,23 @@ def check_session(request: Request):
 
 @router.post('/admin/logout')
 async def admin_logout(request: Request):
+	"""Handle admin user logout by clearing the session.
+
+	This async endpoint removes the admin session from the sessions dictionary
+	and clears the admin_session cookie, then redirects the user to the login page.
+
+	Args:
+		request (Request): The incoming HTTP request object containing cookies.
+
+	Returns:
+		RedirectResponse: A redirect response to '/admin/login' with HTTP 302 status code
+						 and the admin_session cookie deleted.
+
+	Note:
+		- Safely handles cases where the session_id doesn't exist in admin_sessions
+		- Clears both server-side session storage and client-side cookie
+
+	"""
 	session_id = request.cookies.get('admin_session')
 
 	if session_id in admin_sessions:
@@ -128,61 +290,190 @@ async def admin_logout(request: Request):
 
 @router.get('/admin/products', response_class=HTMLResponse)
 def admin_products(request: Request):
+	"""Render the admin products management page.
+
+	Requires admin authentication to access. This endpoint serves the admin
+	products template where administrators can view and manage product inventory.
+
+	Args:
+		request (Request): The HTTP request object containing client information
+						   and session data.
+
+	Returns:
+		TemplateResponse: Rendered HTML template 'admin_products.html' with the
+						  request context.
+
+	Raises:
+		HTTPException: If the user is not authenticated as an administrator
+					   (raised by require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_products.html', {'request': request})
 
 
 @router.get('/admin/products/add', response_class=HTMLResponse)
 def admin_add_product(request: Request):
+	"""Handle the admin product addition page request.
+
+	Args:
+		request (Request): The incoming HTTP request object.
+
+	Returns:
+		TemplateResponse: A template response rendering the admin product addition form.
+
+	Raises:
+		HTTPException: If the user is not authenticated as an admin.
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_products_add.html', {'request': request})
 
 
 @router.get('/admin/categories', response_class=HTMLResponse)
 def admin_categories(request: Request):
+	"""Handle admin categories page request.
+
+	Verifies that the requesting user has admin authentication before
+	rendering the admin categories template.
+
+	Args:
+		request (Request): The incoming HTTP request object.
+
+	Returns:
+		TemplateResponse: Rendered admin_categories.html template with request context.
+
+	Raises:
+		HTTPException: If user lacks admin authentication (via require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_categories.html', {'request': request})
 
 
 @router.get('/admin/categories/add', response_class=HTMLResponse)
 def admin_add_category(request: Request):
+	"""Handle GET request to display the admin category addition form.
+
+	This endpoint requires admin authentication. It renders the admin categories
+	add template which contains the form for creating a new product category.
+
+	Args:
+		request (Request): The incoming HTTP request object containing user session
+						  and authentication information.
+
+	Returns:
+		TemplateResponse: Renders 'admin_categories_add.html' with the request object
+						 passed to the template context.
+
+	Raises:
+		HTTPException: If the user is not authenticated as an admin (via require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_categories_add.html', {'request': request})
 
 
 @router.get('/admin/orders', response_class=HTMLResponse)
 def admin_orders(request: Request):
+	"""Handle the admin orders page request.
+
+	Requires administrator authentication to access this endpoint.
+
+	Args:
+		request (Request): The HTTP request object containing client information.
+
+	Returns:
+		TemplateResponse: A template response rendering the admin orders page with the request
+		context.
+
+	Raises:
+		HTTPException: If the user is not authenticated as an administrator (raised by
+		require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_orders.html', {'request': request})
 
 
 @router.get('/admin/orders/pending', response_class=HTMLResponse)
 def admin_orders_pending(request: Request):
+	"""Render the admin pending orders page.
+
+	Args:
+		request (Request): The HTTP request object containing user session information.
+
+	Returns:
+		TemplateResponse: A template response rendering 'admin_orders_pending.html' with the request
+		context.
+
+	Raises:
+		Unauthorized: If the user is not authenticated as an admin (via require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_orders_pending.html', {'request': request})
 
 
 @router.get('/admin/users', response_class=HTMLResponse)
 def admin_users(request: Request):
+	"""Handle the admin users page request.
+
+	Verifies that the request is authenticated with admin privileges before
+	rendering the admin users template.
+
+	Args:
+		request (Request): The incoming HTTP request object.
+
+	Returns:
+		TemplateResponse: A template response rendering 'admin_users.html'
+						 with the request context.
+
+	Raises:
+		HTTPException: If the request does not have valid admin authentication.
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_users.html', {'request': request})
 
 
 @router.get('/admin/users/activity', response_class=HTMLResponse)
 def admin_users_activity(request: Request):
+	"""Handle admin request to view users activity page.
+
+	Args:
+		request (Request): The HTTP request object containing user session and context.
+
+	Returns:
+		TemplateResponse: Rendered HTML template 'admin_users_activity.html' with request context.
+
+	Raises:
+		HTTPException: If user is not authenticated as admin (via require_admin_auth).
+
+	"""
 	require_admin_auth(request)
 	return templates.TemplateResponse('admin_users_activity.html', {'request': request})
 
 
-# ========== RUTAS API PARA ADMINISTRACIÓN ==========
-
-
 @router.get('/api/v1/admin/stats/products')
-def api_get_products_stats(
-	request: Request,
-	db: Session = Depends(get_db),
-):
-	"""Estadísticas de productos para el panel de admin"""
+def api_get_products_stats(request: Request, db: Session = Depends(get_db)):
+	"""Retrieve statistics about products from the database for administrative purposes.
+
+	Args:
+		request (Request): The incoming HTTP request object, used for authentication.
+		db (Session, optional): SQLAlchemy database session dependency.
+
+	Returns:
+		dict: A dictionary containing the following product statistics:
+			- 'total_productos': Total number of products.
+			- 'productos_bajo_stock': Number of products with stock less than 10.
+			- 'productos_sin_imagen': Number of products without an image.
+			- 'bajo_stock_porcentaje': Percentage of products with low stock (less than 10).
+
+	Raises:
+		HTTPException: If the user is not authenticated as an admin.
+
+	"""
 	require_admin_auth(request)
 
 	total_productos = db.query(ProductoDAO).count()
@@ -190,7 +481,7 @@ def api_get_products_stats(
 
 	productos_sin_imagen = (
 		db.query(ProductoDAO)
-		.filter((ProductoDAO.imagen == None) | (ProductoDAO.imagen == ''))
+		.filter((ProductoDAO.imagen is None) | (ProductoDAO.imagen == ''))
 		.count()
 	)
 
@@ -205,16 +496,29 @@ def api_get_products_stats(
 
 
 @router.get('/api/v1/admin/stats/orders')
-def api_get_orders_stats(
-	request: Request,
-	db: Session = Depends(get_db),
-):
-	"""Estadísticas de pedidos para el panel de admin"""
+def api_get_orders_stats(request: Request, db: Session = Depends(get_db)):
+	"""Retrieve statistics about orders for admin users.
+
+	This endpoint requires admin authentication and provides the following statistics:
+	- Total number of orders.
+	- Number of orders placed today.
+	- Total sales amount.
+	- Number of orders grouped by their status.
+
+	Args:
+		request (Request): The incoming HTTP request, used for authentication.
+		db (Session, optional): SQLAlchemy database session dependency.
+
+	Returns:
+		dict: A dictionary containing:
+			- 'total_pedidos' (int): Total number of orders.
+			- 'pedidos_hoy' (int): Number of orders placed today.
+			- 'total_ventas' (float): Total sales amount.
+			- 'por_estado' (dict): Mapping of order status to the count of orders in that status.
+
+	"""
 	require_admin_auth(request)
 
-	from sqlalchemy import func
-
-	# Contar pedidos por estado
 	pedidos_por_estado = (
 		db.query(PedidoDAO.estado, func.count(PedidoDAO.id_pedido).label('cantidad'))
 		.group_by(PedidoDAO.estado)
@@ -222,12 +526,8 @@ def api_get_orders_stats(
 	)
 
 	total_pedidos = db.query(PedidoDAO).count()
-
-	# Pedidos de hoy
 	hoy = datetime.now().date()
 	pedidos_hoy = db.query(PedidoDAO).filter(func.date(PedidoDAO.fecha_pedido) == hoy).count()
-
-	# Total de ventas
 	total_ventas = db.query(func.sum(PedidoDAO.total)).scalar() or 0
 
 	return {
@@ -239,22 +539,31 @@ def api_get_orders_stats(
 
 
 @router.get('/api/v1/admin/stats/users')
-def api_get_users_stats(
-	request: Request,
-	db: Session = Depends(get_db),
-):
-	"""Estadísticas de usuarios para el panel de admin"""
+def api_get_users_stats(request: Request, db: Session = Depends(get_db)):
+	"""Retrieve user statistics for the admin dashboard.
+
+	This endpoint requires admin authentication and returns various statistics about users in the
+	system, including:
+	- Total number of users.
+	- Number of users who have placed at least one order.
+	- Number of users registered in the last 7 days.
+	- Percentage of users who have placed at least one order.
+
+	Args:
+		request (Request): The incoming HTTP request, used for authentication.
+		db (Session, optional): SQLAlchemy database session, injected via dependency.
+
+	Returns:
+		dict: A dictionary containing the following keys:
+			- 'total_usuarios' (int): Total number of users.
+			- 'usuarios_con_pedidos' (int): Number of users with at least one order.
+			- 'nuevos_usuarios_7dias' (int): Number of users registered in the last 7 days.
+			- 'usuarios_activos_porcentaje' (float): Percentage of users with at least one order.
+
+	"""
 	require_admin_auth(request)
-
 	total_usuarios = db.query(ClienteDAO).count()
-
-	# Usuarios con pedidos
 	usuarios_con_pedidos = db.query(ClienteDAO).join(PedidoDAO).distinct().count()
-
-	# Últimos usuarios registrados (últimos 7 días)
-	from datetime import datetime, timedelta
-	from sqlalchemy import func
-
 	siete_dias_atras = datetime.now() - timedelta(days=7)
 	nuevos_usuarios = (
 		db.query(ClienteDAO)
@@ -275,21 +584,37 @@ def api_get_users_stats(
 
 
 @router.get('/api/v1/admin/debug')
-def api_admin_debug(
-	request: Request,
-	db: Session = Depends(get_db),
-):
-	"""Endpoint de diagnóstico para el administrador"""
+def api_admin_debug(request: Request, db: Session = Depends(get_db)):
+	"""Provide a debug endpoint for admin users to retrieve basic statistics, verify connectivity.
+
+	Args:
+		request (Request): The incoming HTTP request, used for authentication.
+		db (Session, optional): SQLAlchemy database session, injected by dependency.
+
+	Returns:
+		dict: A dictionary containing:
+			- 'status': Operation status ('OK' or 'ERROR').
+			- 'database': Connection status ('connected' or 'connection_failed').
+			- 'timestamp': ISO formatted timestamp of the response.
+			- 'counts': Dictionary with total counts for 'categorias', 'productos', 'clientes', and
+			'pedidos'.
+			- 'last_records': Dictionary with the last record for each table (categoria, producto,
+			cliente, pedido), including key fields.
+			- 'error': Error message (only present if an exception occurs).
+
+	Raises:
+		Exception: Any exception encountered during database operations is caught and returned in
+		the response.
+
+	"""
 	require_admin_auth(request)
 
 	try:
-		# Estadísticas básicas
 		total_categorias = db.query(CategoriaDAO).count()
 		total_productos = db.query(ProductoDAO).count()
 		total_clientes = db.query(ClienteDAO).count()
 		total_pedidos = db.query(PedidoDAO).count()
 
-		# Verificar conexión a cada tabla
 		ultima_categoria = db.query(CategoriaDAO).order_by(CategoriaDAO.id_categoria.desc()).first()
 		ultimo_producto = db.query(ProductoDAO).order_by(ProductoDAO.id_producto.desc()).first()
 		ultimo_cliente = db.query(ClienteDAO).order_by(ClienteDAO.id_cliente.desc()).first()
@@ -341,9 +666,6 @@ def api_admin_debug(
 		}
 
 
-# ========== RUTAS ESPECIALES PARA FILTRADO ==========
-
-
 @router.get('/api/v1/admin/filter/orders')
 def api_filter_orders(
 	request: Request,
@@ -355,12 +677,38 @@ def api_filter_orders(
 	limit: int = Query(100, ge=1, le=200),
 	db: Session = Depends(get_db),
 ):
-	"""Filtrado avanzado de pedidos para el panel de admin"""
+	"""
+	Filter and retrieves orders (pedidos) from the database based on provided query parameters.
+
+	Args:
+		request (Request): The incoming HTTP request object.
+		estado (str, optional): Filter orders by their status. Defaults to None.
+		cliente_id (int, optional): Filter orders by client ID. Defaults to None.
+		fecha_desde (str, optional): ISO 8601 date string to filter orders from this date
+		(inclusive). Defaults to None.
+		fecha_hasta (str, optional): ISO 8601 date string to filter orders up to this date
+		(inclusive). Defaults to None.
+		skip (int, optional): Number of records to skip for pagination. Defaults to 0.
+		limit (int, optional): Maximum number of records to return (between 1 and 200). Defaults to
+		100.
+		db (Session): SQLAlchemy database session dependency.
+
+	Returns:
+		list[dict]: A list of dictionaries, each representing an order with keys:
+			- 'id_pedido': Order ID
+			- 'id_cliente': Client ID
+			- 'fecha_pedido': Order date in ISO format (or None)
+			- 'total': Total amount as float
+			- 'estado': Order status
+
+	Raises:
+		None directly, but may raise exceptions from authentication or database access.
+
+	"""
 	require_admin_auth(request)
 
 	query = db.query(PedidoDAO)
 
-	# Aplicar filtros
 	if estado:
 		query = query.filter(PedidoDAO.estado == estado)
 
@@ -381,10 +729,8 @@ def api_filter_orders(
 		except ValueError:
 			pass
 
-	# Ordenar por fecha más reciente
 	query = query.order_by(PedidoDAO.fecha_pedido.desc())
 
-	# Aplicar paginación
 	pedidos = query.offset(skip).limit(limit).all()
 
 	return [
@@ -411,14 +757,40 @@ def api_filter_products(
 	limit: int = Query(100, ge=1, le=200),
 	db: Session = Depends(get_db),
 ):
-	"""Filtrado avanzado de productos para el panel de admin"""
-	require_admin_auth(request)
+	"""
+	Filter and retrieve products with pagination and optional filters.
 
-	from sqlalchemy import and_
+	Retrieves a paginated list of products from the database with support for
+	filtering by category, price range, and stock range. Requires admin authentication.
+
+	Args:
+		request (Request): The HTTP request object used for authentication.
+		categoria_id (int, optional): Filter by product category ID. Defaults to None.
+		stock_min (int, optional): Minimum stock quantity filter. Defaults to None.
+		stock_max (int, optional): Maximum stock quantity filter. Defaults to None.
+		precio_min (float, optional): Minimum price filter. Defaults to None.
+		precio_max (float, optional): Maximum price filter. Defaults to None.
+		skip (int): Number of records to skip for pagination. Defaults to 0, must be >= 0.
+		limit (int): Maximum number of records to return. Defaults to 100, must be between 1-200.
+		db (Session): Database session dependency. Injected by FastAPI's Depends().
+
+	Returns:
+		list[dict]: A list of dictionaries containing filtered product information with keys:
+			- id_producto (int): Product ID
+			- nombre (str): Product name
+			- descripcion (str): Product description
+			- precio (float): Product price
+			- stock (int): Current stock quantity
+			- id_categoria (int): Category ID
+			- imagen (str): Product image URL/path
+	Raises:
+		HTTPException: If user is not authenticated as admin.
+
+	"""
+	require_admin_auth(request)
 
 	query = db.query(ProductoDAO)
 
-	# Aplicar filtros
 	if categoria_id:
 		query = query.filter(ProductoDAO.id_categoria == categoria_id)
 
@@ -434,10 +806,8 @@ def api_filter_products(
 	if precio_max is not None:
 		query = query.filter(ProductoDAO.precio <= precio_max)
 
-	# Ordenar por ID
 	query = query.order_by(ProductoDAO.id_producto)
 
-	# Aplicar paginación
 	productos = query.offset(skip).limit(limit).all()
 
 	return [
@@ -452,6 +822,3 @@ def api_filter_products(
 		}
 		for p in productos
 	]
-
-
-# other routes

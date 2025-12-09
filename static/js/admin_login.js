@@ -72,6 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  /**
+   * Displays an error message to the user, highlights the error element,
+   * scrolls it into view, and focuses the first empty input field (username or password).
+   *
+   * @param {string} message - The error message to display.
+   */
   function showError(message) {
     errorEl.textContent = message;
     errorEl.className = "error";

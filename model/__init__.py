@@ -1,3 +1,14 @@
+"""Expose data models and Data Transfer Objects (DTOs) used in the application.
+
+Aggregate and expose classes related to shopping carts, categories, clients, shipping,
+payments, orders, and products. Each imported class provides structure and functionality for
+creating, accessing, and manipulating domain entities and their details.
+
+The `__all__` variable defines the public API of the module, listing all available models and
+DTOs for external use.
+
+"""
+
 from .carrito import (
 	CarritoCreateDTO,
 	CarritoDAO,

@@ -16,26 +16,28 @@
             </tr>
         </thead>
         <tbody id="orders-body">
-            <tr><td colspan="6">Cargando pedidos...</td></tr>
+            <tr>
+                <td colspan="6">Cargando pedidos...</td>
+            </tr>
         </tbody>
     </table>
 </div>
 
 <script>
-async function loadOrders() {
-    const tbody = document.getElementById('orders-body');
-    tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
-    
-    try {
-        const response = await fetch('/api/v1/pedidos');
-        const orders = await response.json();
-        
-        if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">No hay pedidos registrados</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = orders.map(order => `
+    async function loadOrders() {
+        const tbody = document.getElementById('orders-body');
+        tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
+
+        try {
+            const response = await fetch('/api/v1/pedidos');
+            const orders = await response.json();
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay pedidos registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = orders.map(order => `
             <tr>
                 <td>${order.id_pedido}</td>
                 <td>${order.id_cliente}</td>
@@ -49,45 +51,44 @@ async function loadOrders() {
                 </td>
             </tr>
         `).join('');
-    } catch (error) {
-        tbody.innerHTML = '<tr><td colspan="6">Error cargando pedidos</td></tr>';
-    }
-}
-
-async function deleteOrder(id) {
-    if (!confirm('¿Estás seguro de eliminar este pedido?')) return;
-    
-    try {
-        const response = await fetch(`/api/v1/pedidos/${id}`, {
-            method: 'DELETE'
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert('✅ Pedido eliminado');
-            loadOrders();
-        } else {
-            alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+        } catch (error) {
+            tbody.innerHTML = '<tr><td colspan="6">Error cargando pedidos</td></tr>';
         }
-    } catch (error) {
-        alert('❌ Error de conexión');
     }
-}
 
-function viewOrderDetails(id) {
-    window.adminOpenModal(`
+    async function deleteOrder(id) {
+        if (!confirm('¿Estás seguro de eliminar este pedido?')) return;
+
+        try {
+            const response = await fetch(`/api/v1/pedidos/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Pedido eliminado');
+                loadOrders();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    function viewOrderDetails(id) {
+        window.adminOpenModal(`
         <h3>Detalles del Pedido #${id}</h3>
         <p>Cargando detalles...</p>
     `);
-    
-    // Cargar detalles del pedido
-    fetch(`/api/v1/pedidos/${id}/detalles`)
-        .then(response => response.json())
-        .then(detalles => {
-            let detallesHTML = '';
-            detalles.forEach(detalle => {
-                detallesHTML += `
+
+        fetch(`/api/v1/pedidos/${id}/detalles`)
+            .then(response => response.json())
+            .then(detalles => {
+                let detallesHTML = '';
+                detalles.forEach(detalle => {
+                    detallesHTML += `
                     <div class="detalle-item">
                         <p><strong>Producto ID:</strong> ${detalle.id_producto}</p>
                         <p><strong>Cantidad:</strong> ${detalle.cantidad}</p>
@@ -95,16 +96,16 @@ function viewOrderDetails(id) {
                         <hr>
                     </div>
                 `;
+                });
+                document.getElementById('modal-body').innerHTML += detallesHTML;
+            })
+            .catch(error => {
+                console.error('Error cargando detalles:', error);
             });
-            document.getElementById('modal-body').innerHTML += detallesHTML;
-        })
-        .catch(error => {
-            console.error('Error cargando detalles:', error);
-        });
-}
+    }
 
-function updateOrderStatus(id) {
-    window.adminOpenModal(`
+    function updateOrderStatus(id) {
+        window.adminOpenModal(`
         <h3>Actualizar Estado del Pedido #${id}</h3>
         <div class="form-group">
             <label for="estado">Nuevo Estado:</label>
@@ -121,33 +122,33 @@ function updateOrderStatus(id) {
             <button onclick="window.adminCloseModal()" class="btn-secondary">Cancelar</button>
         </div>
     `);
-}
-
-async function saveStatus(orderId) {
-    const estado = document.getElementById('estado').value;
-    
-    try {
-        const response = await fetch(`/api/v1/pedidos/${orderId}/estado`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({estado: estado})
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            alert('✅ Estado actualizado');
-            window.adminCloseModal();
-            loadOrders();
-        } else {
-            alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
-        }
-    } catch (error) {
-        alert('❌ Error de conexión');
     }
-}
 
-loadOrders();
+    async function saveStatus(orderId) {
+        const estado = document.getElementById('estado').value;
+
+        try {
+            const response = await fetch(`/api/v1/pedidos/${orderId}/estado`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ estado: estado })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('✅ Estado actualizado');
+                window.adminCloseModal();
+                loadOrders();
+            } else {
+                alert(`❌ Error: ${result.detail || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            alert('❌ Error de conexión');
+        }
+    }
+
+    loadOrders();
 </script>

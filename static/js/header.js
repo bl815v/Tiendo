@@ -38,6 +38,17 @@
     });
   }
 
+  /**
+   * Initializes the header functionality, including:
+   * - Waiting for header elements to be available.
+   * - Setting up modal dialogs for user account actions (register/login).
+   * - Handling modal open/close logic and dynamic content loading via fetch.
+   * - Managing search input and button to perform search navigation.
+   * 
+   * @async
+   * @function
+   * @returns {Promise<void>} Resolves when the header is initialized or logs errors if initialization fails.
+   */
   async function initHeader() {
     let elements;
     try {
@@ -64,18 +75,32 @@
       </div>
     `);
 
+    /**
+     * Resets the modal content to its initial state and adjusts its size.
+     * 
+     * This function restores the modal's inner HTML to the initial content,
+     * removes the "modal-large" class, and adds the "modal-small" class to
+     * ensure the modal appears in its default small size.
+     */
     function resetModal() {
       modalContent.innerHTML = modalInicial;
       modalContent.classList.remove("modal-large");
       modalContent.classList.add("modal-small");
     }
 
+    /**
+     * Displays the modal by resetting its state and removing the "hidden" class.
+     * Also logs a message to the console when the modal is shown.
+     */
     function showModal() {
       resetModal();
       modal.classList.remove("hidden");
       console.log("Modal mostrado");
     }
 
+    /**
+     * Hides the modal by adding the "hidden" class and resets its content.
+     */
     function hideModal() {
       modal.classList.add("hidden");
       resetModal();
@@ -83,6 +108,11 @@
 
     cuenta.addEventListener("click", showModal);
 
+    /**
+     * Sets up an event handler for the modal close button.
+     * Attaches a click event listener to the element with the ID "modal-close"
+     * that triggers the `hideModal` function when clicked.
+     */
     function setupCloseHandler() {
       const closeBtn = document.getElementById("modal-close");
       if (closeBtn) {
@@ -138,6 +168,15 @@
 
     setupCloseHandler();
 
+    /**
+     * Executes a search based on the user's input.
+     * Retrieves the value from the search input, trims whitespace,
+     * and if the input is not empty, redirects the browser to the search results page
+     * with the search term as a URL query parameter.
+     *
+     * @function
+     * @returns {void}
+     */
     function ejecutarBusqueda() {
       const termino = (searchInput.value || "").trim();
       console.log("Buscando:", termino);
